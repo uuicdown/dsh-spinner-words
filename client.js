@@ -79,7 +79,6 @@ window.__ModuleLoader__.load({
 		// 全都认不出来 = 自动停用（见文件头），不报错不崩。
 		var ANCHORS = ["深度求索中", "Deep diving", "Deep diving...", "Deep diving…"];
 		var DURATION_RE = /^(?:深度求索中，用时 |Deep diving for ).*···$/;
-		var BUILTIN = ANCHORS[0];
 		function isAnchor(text) {
 			if (ANCHORS.indexOf(text) !== -1) return true;
 			return DURATION_RE.test(text);

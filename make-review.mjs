@@ -16,6 +16,12 @@ const SECTION_SIZES = [
 const en = (s) => s.charAt(0).toUpperCase() + s.slice(1) + '...'
 const zh = (s) => s + '…'
 
+/** Markdown 表格单元格：反斜杠、竖线、换行都要处理，否则会破坏表格结构。 */
+const cell = (value) => String(value == null ? '' : value)
+  .replace(/\\/g, '\\\\')
+  .replace(/\|/g, '\\|')
+  .replace(/\r?\n/g, ' ')
+
 const out = []
 out.push('# dsh-spinner-words · 词表审核清单')
 out.push('')
