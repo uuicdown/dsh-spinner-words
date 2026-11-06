@@ -597,7 +597,9 @@ window.__ModuleLoader__.load({
 		 *  重置保底节流窗口防止自动轮换立刻覆盖，并同步所有活动状态行。 */
 		var toggleReady = new WeakSet();
 		function toggleHint() {
-			return lang === "zh" ? "点击切换为 English" : "点击切换为中文";
+			return lang === "zh"
+				? "点击切换为 English；Alt+点击 或 Alt+E 编辑词池"
+				: "Click to switch to 中文; Alt+click or Alt+E edits the word pool";
 		}
 		function onToggle(e) {
 			// Alt / Cmd + 点击 = 打开词池编辑器（加减词、改映射）
@@ -856,6 +858,15 @@ window.__ModuleLoader__.load({
 		function start() {
 			refreshPool();
 			sweep();
+			// 键盘入口：Alt+E 打开词池编辑器。不依赖点击冒泡，行组件拦事件也照样能开。
+			document.addEventListener("keydown", function (e) {
+				if (!e || !e.altKey || e.ctrlKey || e.metaKey) return;
+				if (e.key === "e" || e.key === "E") {
+					e.preventDefault();
+					e.stopPropagation();
+					openEditor();
+				}
+			}, true);
 			setInterval(maintain, MAINTAIN_MS);
 			// childList：认领新挂载的状态行、捕获轮换事件；
 			// characterData：React 每秒回写「用时」到文本节点时立刻恢复（只筛锚点，代价 O(1)）。
