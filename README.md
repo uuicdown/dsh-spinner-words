@@ -3,17 +3,17 @@
 [![npm](https://img.shields.io/npm/v/dsh-spinner-words?color=3b82f6)](https://www.npmjs.com/package/dsh-spinner-words)
 [![license](https://img.shields.io/npm/l/dsh-spinner-words?color=3b82f6)](LICENSE)
 
-把 DeepSeek Harness 思考状态行的那句「深度求索中」，换成一组会轮换的双语短语：Claude Code 原版 spinner 词、鲸鱼系 deep 短语、中国本土文化词。
+把 DeepSeek Harness 思考状态行的那句「深度求索中」，换成一池双语短语，每回合抽一条：Claude Code 原版 spinner 词、鲸鱼系 deep 短语、中国本土文化词。
 
 纯前端插件，不改 DSH 源码，不占用渲染插槽。
 
 <img src="docs/status.png" width="354" alt="真实截图：DSH 运行中的状态行显示「正在体会上善若水…」">
 
-*真实截图：运行中的状态行显示「正在体会上善若水…」，点一下切英文。*
+*截图来自运行中的 DSH，点一下状态行会切到同一条短语的英文。*
 
 ## 它做什么
 
-- 一回合一个词：每次请求开场从词池里随机抽一条，整个回合不再变化，和 Claude Code 的行为一致。长时间思考不会被反复换词打断。
+- 一回合一个词：每次请求开场从词池里随机抽一条，整个回合不变，和 Claude Code 一致。正在想的时候不会被换词打断。
 - 中英双语一一对应：点击状态行切换语言，换的是同一条短语，不会重新抽取；选择记在 `localStorage`，重载后恢复。
 - 注脚不占状态行：29 条典故类词带完整英文注脚（如「凿壁偷光」→ boring a hole in the wall to steal a neighbor's lamplight），只在鼠标悬停时显示。
 - 词池可以自己改：双击状态行或按 `Alt+E` 打开编辑器，一行一条增删改，下个回合生效。
@@ -27,7 +27,7 @@
 | 中国本土 · 雅 | 86 | `凿壁偷光中` / `庖丁解牛中` / `一蓑烟雨中` / `正在望月` |
 | 中国本土 · 俗 | 30 | `带薪思考中` / `憋大招中` / `已读乱回中` |
 
-完整清单见 [`REVIEW.md`](REVIEW.md)。它由 `make-review.mjs` 直接从 `client.js` 里的词池生成，和线上内容逐字一致。
+完整清单见 [`REVIEW.md`](REVIEW.md)。它由 `make-review.mjs` 从 `client.js` 的词池直接生成，和代码逐字一致。
 
 ## 安装
 
@@ -71,9 +71,9 @@ chipping through the wall | 正在凿壁偷光 | boring a hole in the wall for a
 
 ## 实现
 
-状态行的文案有两处载体：底层是文本节点，高光扫过层是 `data-shimmer-text` 属性，由 CSS `::after` 画出来。插件两处都写，同时更新屏幕阅读器节点；React 每秒把用时写回文本时，`characterData` 监听会立刻恢复，不会闪回内置文案。
+状态行的文案有两处载体：底层是文本节点，高光层是 `data-shimmer-text` 属性，由 CSS `::after` 画出来。插件两处都写，并同步屏幕阅读器节点。React 每秒重渲、把用时写回文本时，`characterData` 监听会立刻恢复，不会闪回内置文案。
 
-图标、动效、尺寸、颜色都不动，小鲸鱼保持 DSH 自带的游动。插件只管文案和交互。
+图标、动效、尺寸、颜色都不动，小鲸鱼保持 DSH 自带的游动。
 
 ## 兼容与降级
 
@@ -84,7 +84,7 @@ chipping through the wall | 正在凿壁偷光 | boring a hole in the wall for a
 
 ## 与 dsh-deep-verbs 二选一
 
-两个插件抢同一个状态行节点，同时启用会互相回写、文案抖动。要用这个，先在 profile 的 `cordis.patch.yml` 里把对方的 `insert` 移除，或标 `disabled: true`。
+两个插件抢同一个状态行节点，同时启用会互相回写、文案抖动。要用本插件，先在 profile 的 `cordis.patch.yml` 里把对方的 `insert` 移除，或标 `disabled: true`。
 
 ## 词表来源
 
@@ -94,7 +94,7 @@ chipping through the wall | 正在凿壁偷光 | boring a hole in the wall for a
 
 ## 开发
 
-见 [`DEVELOPING.md`](DEVELOPING.md)。一句话版本：`node verify.mjs`，20 项断言，用 `node:vm` 驱动真实 bundle，不需要浏览器。
+见 [`DEVELOPING.md`](DEVELOPING.md)。一句话版本：`node verify.mjs`，21 项断言，用 `node:vm` 驱动真实 bundle，不需要浏览器。
 
 ## License
 
