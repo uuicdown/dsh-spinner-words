@@ -103,15 +103,21 @@ function textNode(data) {
   }
 }
 
-/** 一个运行状态行容器：<div data-chat-running> … [data-shimmer-text] … [role=status] … </div> */
+/** 一个运行状态行容器：<div data-chat-running> … [data-shimmer-text]×2 … [role=status] … </div>
+ *  注意 TextShimmer 会渲染两个同属性节点：可见文字层 + 高光扫过层（.sweep/.decoration），
+ *  只改一个会与另一个叠字。 */
 function host(text) {
-  const shimmer = {
-    nodeType: 1,
-    attrs: { 'data-shimmer-text': text },
-    writes: 0,
-    getAttribute(name) { return name in this.attrs ? this.attrs[name] : null },
-    setAttribute(name, value) { this.attrs[name] = value; this.writes++ }
+  function shimmerNode() {
+    return {
+      nodeType: 1,
+      attrs: { 'data-shimmer-text': text },
+      writes: 0,
+      getAttribute(name) { return name in this.attrs ? this.attrs[name] : null },
+      setAttribute(name, value) { this.attrs[name] = value; this.writes++ }
+    }
   }
+  const shimmer = shimmerNode()
+  const sweep = shimmerNode()
   const a11y = { nodeType: 1, firstChild: textNode(text) }
   const listeners = {}
   return {
@@ -121,13 +127,15 @@ function host(text) {
     getAttribute: (name) => (name === 'data-chat-running' ? '' : null),
     hasAttribute: (name) => name === 'data-chat-running',
     querySelector: (sel) => (sel === '[data-shimmer-text]' ? shimmer : sel === '[role="status"]' ? a11y : null),
-    querySelectorAll: () => [],
+    querySelectorAll: (sel) => (sel === '[data-shimmer-text]' ? [shimmer, sweep] : []),
     addEventListener(type, fn) { (listeners[type] ||= []).push(fn) },
     fire(type) { (listeners[type] || []).forEach((fn) => fn()) },
     _shimmer: shimmer,
+    _sweep: sweep,
     _a11y: a11y,
     label() { return shimmer.attrs['data-shimmer-text'] },
-    relabel(v) { shimmer.attrs['data-shimmer-text'] = v }
+    sweepLabel() { return sweep.attrs['data-shimmer-text'] },
+    relabel(v) { shimmer.attrs['data-shimmer-text'] = v; sweep.attrs['data-shimmer-text'] = v }
   }
 }
 
@@ -191,7 +199,8 @@ assert.strictEqual(status._a11y.firstChild.data, status.label(), '读屏用的 r
 assert.strictEqual(status.title, '点击切换为 English', '认领后应挂上可点击提示')
 assert.strictEqual(status.style.cursor, 'pointer', '认领后应可点击')
 const zhLabel = status.label()
-ok(`认领成功，改写属性显示中文：${zhLabel}`)
+assert.strictEqual(status.sweepLabel(), zhLabel, '高光扫过层（sweep）必须同步改写，否则两层文字叠在一起')
+ok(`认领成功，两层属性都改写：${zhLabel}`)
 
 status.fire('click')
 assert.match(status.label(), /^[A-Z].*\.\.\.$/, `点击后应显示英文短语，实际 "${status.label()}"`)

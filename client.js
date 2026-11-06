@@ -53,15 +53,11 @@
 //     防止随后的自动轮换立刻覆盖用户的选择。
 // Bundle 格式遵循 DSH client 模块系统：window.__ModuleLoader__.load({id, factory})。
 // 纯浏览器实现：无 require 依赖，host（Node）进程误导入本文件时静默跳过。
-// 诊断探针：不需要开发者工具也能看出卡在哪一环——窗口标题会变。
-//   "✅module-loaded · 原标题"  = 这个文件进了浏览器，但 apply 没被调用
-//   "✅applied · 原标题"        = apply 跑过了（再不改文案 = 认领逻辑有问题）
-//   标题毫无变化               = 模块根本没被加载（清单/发布环节的问题）
+// 状态标记：模块执行到哪一步会写在 window.__dshSpinnerWords 上
+// （module-loaded → applied → claimed），排查时在 console 看一眼即可，不碰界面。
 try {
 	if (typeof window !== "undefined") {
-		window.__dshSpinnerWordsBaseTitle = typeof document !== "undefined" ? document.title : "";
 		window.__dshSpinnerWords = "module-loaded";
-		if (typeof document !== "undefined") document.title = "✅module-loaded · " + window.__dshSpinnerWordsBaseTitle;
 		if (typeof console !== "undefined") console.info("[dsh-spinner-words] module-loaded");
 	}
 } catch (e) { /* noop */ }
@@ -481,10 +477,14 @@ window.__ModuleLoader__.load({
 		 *  返回本次是否真的写了 DOM。 */
 		function setText(host, label) {
 			var changed = false;
-			var pixel = shimmerOf(host);
-			if (pixel && pixel.getAttribute("data-shimmer-text") !== label) {
-				pixel.setAttribute("data-shimmer-text", label);
-				changed = true;
+			// TextShimmer 会渲染两个同属性节点：可见文字层 + 高光扫过层（.sweep/.decoration）。
+			// 只改一个 → 两层文字叠在一起，用户看到自定义短语和「深度求索中」重影。
+			var pixels = host.querySelectorAll("[data-shimmer-text]");
+			for (var p = 0; p < pixels.length; p++) {
+				if (pixels[p].getAttribute("data-shimmer-text") !== label) {
+					pixels[p].setAttribute("data-shimmer-text", label);
+					changed = true;
+				}
 			}
 			var a11y = host.querySelector('[role="status"]');
 			var first = a11y && a11y.firstChild;
@@ -582,7 +582,7 @@ window.__ModuleLoader__.load({
 				if (!claimedOnce) {
 					claimedOnce = true;
 					try {
-						document.title = "✅claimed · " + (window.__dshSpinnerWordsBaseTitle || "");
+						window.__dshSpinnerWords = "claimed";
 						if (typeof console !== "undefined") console.info("[dsh-spinner-words] claimed a running row");
 					} catch (e) { /* noop */ }
 				}
@@ -677,7 +677,6 @@ window.__ModuleLoader__.load({
 		exports.apply = function () {
 			try {
 				window.__dshSpinnerWords = "applied";
-				if (typeof document !== "undefined") document.title = "✅applied · " + (window.__dshSpinnerWordsBaseTitle || "");
 				if (typeof console !== "undefined") console.info("[dsh-spinner-words] applied");
 			} catch (e) { /* noop */ }
 			if (document.body) start();
