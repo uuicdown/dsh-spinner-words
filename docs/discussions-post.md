@@ -19,19 +19,18 @@ The running-status line always renders the same localized string — `chat.deepD
 ("深度求索中" / "Deep diving"), with `chat.deepDivingFor` appending elapsed time after 15s
 (`server`-side strings, visible in the i18n pack).
 
-It is arguably the most-repeated string in the product: during a long turn the user stares
-at it. Several community plugins already exist just to replace it — they DOM-patch the status
+It appears on every running turn, and a long turn leaves it on screen for minutes. Several community plugins already exist just to replace it — they DOM-patch the status
 line at runtime (e.g. dsh-deep-verbs, dsh-claudecode-tips, dsh-status-rotator, and my own
 dsh-spinner-words).
 
-Patching works, but the approach has three problems that a first-class option would remove:
+Patching works, but it brings three problems that a built-in option would avoid:
 
 1. **Fragile.** A plugin has to anchor on the exact rendered text and on implementation
    details (`data-chat-running`, `data-shimmer-text`). Any wording change silently disables it,
    with no error surfaced to the user.
 2. **They conflict.** Two such plugins fight over the same DOM node and the text flickers.
    Users are told to keep exactly one installed.
-3. **It hides accessibility work.** The status text is rendered in two places (a text node and
+3. **It duplicates accessibility work.** The status text is rendered in two places (a text node and
    a `data-shimmer-text` attribute consumed by CSS `::after`), plus a visually-hidden
    `role="status"` node. Every plugin has to rediscover this and keep them in sync.
 
@@ -42,9 +41,10 @@ Proposal: expose the status words as configuration rather than a fixed translati
 - optionally pick per turn rather than rotating mid-turn — Claude Code picks one word per
   request and keeps it for the whole turn, which reads calmer than a per-second change.
 
-Scope looks small: it is a settings value plus an override for two i18n keys, no new UI surface
-required beyond one settings row. It would also make the existing plugins unnecessary rather
-than competing with them.
+From the outside the change looks small: a settings value plus an override for two i18n keys, with
+no new UI beyond one settings row. I have not read the core code, so treat that as an estimate.
+
+It would also make the existing plugins unnecessary rather than competing with them.
 
 Reference implementation (MIT, if useful): https://github.com/uuicdown/dsh-spinner-words —
 it also documents the two carriers of the text and the `holding` row behavior, which cost me a
