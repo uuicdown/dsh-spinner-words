@@ -764,6 +764,9 @@ window.__ModuleLoader__.load({
 			}
 			for (var j = 0; j < list.length; j++) {
 				var host = list[j];
+				// 见过就记下（含 holding 行）：节流判断只问「有没有没见过的容器」，
+				// 不依赖 tracked，否则占位行会让节流永不生效。
+				seenHosts.add(host);
 				// holding = 本轮已结束、元素留着占位（带 data-holding 且 aria-hidden），
 				// 不是"正在思考"，不认领也不进袋。
 				if (host.hasAttribute && host.hasAttribute("data-holding")) continue;
@@ -868,11 +871,12 @@ window.__ModuleLoader__.load({
 		function onMutate(mutations) {
 			restoreTextNodes(mutations);
 			if (collectActivity(mutations)) activityFlag = true;
+			var hint = batchAddsHost(mutations);
 			if (scheduled) return;
 			scheduled = true;
 			Promise.resolve().then(function () {
 				scheduled = false;
-				sweepThrottled();
+				sweepThrottled(hint);
 				var act = activityFlag;
 				activityFlag = false;
 				if (act) onActivity();
@@ -913,24 +917,51 @@ window.__ModuleLoader__.load({
 			runtime = { observer: null, timer: null, listeners: [] };
 			tracked = new WeakSet();
 			seenRows = new WeakSet();
+			seenHosts = new WeakSet();
 			ownedText = new WeakSet();
 			current = null;
 			closeEditor();
 		}
 
-		// sweep 节流：常规批次最多 200ms 一次；一旦出现未认领的新行就立即执行，
-		// 保证回合开场的认领不会被延迟。restoreTextNodes 的即时路径不受这里影响。
+		// sweep 节流：常规批次最多 200ms 一次。
+		// 「是否需要立即扫」不看 tracked —— holding 占位行和「内容不是锚点」的 host
+		// 永远不会进 tracked，用 tracked 判断会让节流窗口形同不存在。
+		// 改用 seenHosts：**检查过**的 host 都算见过，只有真正没见过的才立刻扫。
 		var SWEEP_MS = 200;
 		var lastSweepAt = 0;
+		var seenHosts = new WeakSet();
 
-		function sweepThrottled() {
-			var list = hostList();
-			var fresh = false;
-			for (var i = 0; i < list.length; i++) {
-				if (!tracked.has(list[i])) { fresh = true; break; }
+		/** 本批新增节点里是否可能含状态行容器（零 DOM 查询的廉价预判）。 */
+		function batchAddsHost(mutations) {
+			for (var i = 0; i < mutations.length; i++) {
+				var added = mutations[i].addedNodes;
+				if (!added) continue;
+				for (var j = 0; j < added.length; j++) {
+					var node = added[j];
+					if (!node || node.nodeType !== 1) continue;
+					if (node.getAttribute && node.getAttribute("data-chat-running") !== null) return true;
+					if (node.querySelector && node.querySelector("[data-chat-running]")) return true;
+				}
 			}
+			return false;
+		}
+
+		function hasFreshHost() {
+			var list = hostList();
+			for (var i = 0; i < list.length; i++) {
+				var h = list[i];
+				if (h.hasAttribute && h.hasAttribute("data-holding")) continue;
+				if (!seenHosts.has(h)) return true;
+			}
+			return false;
+		}
+
+		function sweepThrottled(hint) {
 			var now = Date.now();
-			if (!fresh && now - lastSweepAt < SWEEP_MS) return;
+			if (now - lastSweepAt < SWEEP_MS) {
+				if (!hint) return;              // 本批没有新增容器：不必查 DOM
+				if (!hasFreshHost()) return;    // 新增的都是见过的：仍可跳过
+			}
 			lastSweepAt = now;
 			sweep();
 		}

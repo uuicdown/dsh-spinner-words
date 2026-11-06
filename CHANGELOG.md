@@ -5,6 +5,25 @@
 > npm 上最早可安装的版本是 **0.7.4**；0.1.0–0.7.3 只存在于 git 历史，未发布到 registry。
 > 加过 tag 的版本：[`v0.7.2`](../../releases/tag/v0.7.2)、[`v0.7.3`](../../releases/tag/v0.7.3)、[`v0.8.0`](../../releases/tag/v0.8.0)。
 
+## [0.8.4] — 2026-11-06
+
+### Fixed
+
+- **`sweep()` 节流实际未生效**：`fresh` 判定基于 `tracked`，而 holding 占位行与「内容不是锚点」的容器永远不会进 `tracked`，于是 `fresh` 恒为真、每次 DOM 变更都全量扫描。改用 `seenHosts`（检查过即记住）判断，并先用 `batchAddsHost()` 做零查询预判：10 次变更的 `[data-chat-running]` 查询次数从 20 降到 **0**，新容器仍立即认领。
+- `make-review.mjs` 表格单元格统一走 `cell()`：此前只转义竖线，未处理反斜杠与换行（CodeQL `js/incomplete-sanitization`）。
+- 删除 `client.js` 中改用 `isAnchor()` 后遗留的 `BUILTIN` 变量（CodeQL `js/unused-local-variable`）。
+
+### Changed
+
+- `files` 剔除 `docs/` 与三份维护文档，包体 **490 KB → 25 KB**；README 图片改为 raw 外链，npm 页面不再裂图。
+- `install.ps1` 的 `[]` 清理正则收窄到文件开头（`\A` 锚点）。
+- README 兼容表补「宿主给状态行加点击行为会被捕获阶段拦截」。
+
+### Added
+
+- GitHub 原生审计：CodeQL（`javascript-typescript`、`security-and-quality`、push/PR/每周）、Dependabot 配置与警报、密钥扫描 + 推送保护、`SECURITY.md`。
+- 自测 23 → **25 项**，新增节流有效性与「新容器立即认领」的行为断言。
+
 ## [0.8.3] — 2026-11-06
 
 ### Fixed

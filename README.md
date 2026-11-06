@@ -7,11 +7,11 @@
 
 纯前端插件，不改 DSH 源码，不占用渲染插槽。
 
-<img src="docs/status.png" width="354" alt="DSH 运行中的状态行显示「正在体会上善若水…」">
+<img src="https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/status.png" width="354" alt="DSH 运行中的状态行显示「正在体会上善若水…」">
 
 运行中的状态行。
 
-<img src="docs/demo.gif" width="420" alt="演示：连续两个回合分别抽到「原地转圈中…」和「正在撒欢…」">
+<img src="https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/demo.gif" width="420" alt="演示：连续两个回合分别抽到「原地转圈中…」和「正在撒欢…」">
 
 连续两个回合抽到不同的词，中间几帧是上一轮结束。
 

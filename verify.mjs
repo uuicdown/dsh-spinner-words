@@ -422,6 +422,38 @@ assert.strictEqual(JSON.stringify(parsed[2]), JSON.stringify(['只有中文', '�
 ok('parsePool：跳过注释空行、单侧兜底')
 
 
+console.log('节流有效性')
+// 对照实验：页面上留着 holding 占位行（DSH 每轮结束后的常态）时，
+// 节流窗口必须仍然生效。旧实现用 tracked 判断「有没有未认领的新行」，
+// 而 holding 行永远不进 tracked，导致 fresh 恒为真、每次变更都全量扫。
+let hostQueries = 0
+const rawQSA = context.document.querySelectorAll
+context.document.querySelectorAll = (sel) => {
+  if (sel === '[data-chat-running]') hostQueries++
+  return rawQSA(sel)
+}
+const holdRow = host('深度求索中')
+holdRow.hasAttribute = (n) => n === 'data-chat-running' || n === 'data-holding'
+hosts = [holdRow]
+observerCb([{ addedNodes: [holdRow] }])
+await micro()
+hostQueries = 0
+for (let i = 0; i < 10; i++) {
+  observerCb([{ addedNodes: [row('assistant-step')] }])
+  await micro()
+}
+assert.ok(hostQueries <= 2, `holding 行不应让节流失效：10 次变更实际查询 ${hostQueries} 次`)
+ok(`节流生效：10 次变更只查询 ${hostQueries} 次`)
+
+// 节流窗口内出现新容器时仍必须立即认领，不能被延迟 200ms
+const freshHost = host('深度求索中')
+hosts = [holdRow, freshHost]
+observerCb([{ addedNodes: [freshHost] }])
+await micro()
+assert.ok(/…$|\.\.\.$/.test(freshHost.label()), `新容器必须立即认领，不受节流延迟（实际 "${freshHost.label()}"）`)
+ok('新容器立即认领（节流不延迟回合开场）')
+context.document.querySelectorAll = rawQSA
+
 console.log('生命周期')
 assert.ok(typeof bundle.teardown === 'function', 'bundle 必须导出 teardown()')
 assert.ok(src.includes('__dshSpinnerWordsInstance'), '必须有实例守卫，重复 apply 时先拆旧实例')
