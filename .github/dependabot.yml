@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # 运行时零依赖，但仍然监控根 package.json，防止将来引入依赖后无人看管
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+
+  # Actions 版本同样需要跟进，避免用过旧的 checkout / codeql-action
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(actions)'

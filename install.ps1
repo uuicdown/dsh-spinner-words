@@ -95,8 +95,8 @@ if ($nodeLaunchFailed) {
 # ---- 2) 注册到 cordis.patch.yml ----
 $patchFile = Join-Path $ProfileDir 'cordis.patch.yml'
 $patchText = if (Test-Path -LiteralPath $patchFile) { [IO.File]::ReadAllText($patchFile) } else { '' }
-# 去掉文件顶部可能的空 `[]`（空 profile 占位）
-$patchText = [regex]::Replace($patchText, '(?m)^\s*\[\s*\]\s*\r?\n?', '')
+# 只去掉文件开头的空 `[]`（空 profile 占位）；配置中间出现的 `[]` 属用户内容，不动
+$patchText = [regex]::Replace($patchText, '\A\s*\[\s*\]\s*(\r?\n)?', '')
 if ($patchText -notmatch "(?m)^\s*- id: $([regex]::Escape($name))\s*$") {
   if ($patchText.Trim() -eq '') {
     $patchText = "- insert:`n    - id: $name`n      name: '$name'`n"
