@@ -39,8 +39,7 @@ for (const [title, size] of SECTION_SIZES) {
   out.push('| ---: | --- | --- | --- |')
   slice.forEach((p, i) => {
     const n = cursor + i + 1
-    const gloss = p[2] ? p[2].replace(/\|/g, '\\|') : ''
-    out.push(`| ${n} | ${zh(p[1])} | ${en(p[0]).replace(/\|/g, '\\|')} | ${gloss} |`)
+    out.push(`| ${n} | ${cell(zh(p[1]))} | ${cell(en(p[0]))} | ${cell(p[2])} |`)
   })
   out.push('')
   cursor += size
