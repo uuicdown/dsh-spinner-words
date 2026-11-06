@@ -1,14 +1,13 @@
 # dsh-spinner-words
 
+[![npm](https://img.shields.io/npm/v/dsh-spinner-words?color=3b82f6)](https://www.npmjs.com/package/dsh-spinner-words)
+[![license](https://img.shields.io/npm/l/dsh-spinner-words?color=3b82f6)](LICENSE)
+
 把 DeepSeek Harness 思考状态行的那句「深度求索中」，换成一组会轮换的双语短语：Claude Code 原版 spinner 词、鲸鱼系 deep 短语、中国本土文化词。
 
 纯前端插件，不改 DSH 源码，不占用渲染插槽。
 
-```diff
-- 深度求索中…
-+ 凿壁偷光中…                      ← 回合开场随机一条，整回合不变
-+ Chipping through the wall...     ← 点一下，同一条短语换语言
-```
+![状态行示意图：改前是「深度求索中」，改后是「凿壁偷光中」与对应的英文](docs/preview.svg)
 
 ## 它做什么
 
@@ -30,17 +29,21 @@
 
 ## 安装
 
+从 npm 装（[包页面](https://www.npmjs.com/package/dsh-spinner-words)）：
+
 ```bash
 dsh plugin --profile desktop add dsh-spinner-words
 ```
 
-也可以从仓库装：
+从 GitHub 装：
 
 ```bash
 dsh plugin --profile desktop add git+https://github.com/uuicdown/dsh-spinner-words.git
 ```
 
-装完要完全退出 DSH 进程再启动，关掉窗口不算。本地开发想直接链目录，用 `install.ps1`。
+本地开发想直接链目录，用 `install.ps1`。
+
+装完要完全退出 DSH 进程再启动，关掉窗口不算。
 
 ## 操作
 
@@ -84,7 +87,7 @@ chipping through the wall | 正在凿壁偷光 | boring a hole in the wall for a
 ## 词表来源
 
 - Claude Code spinner verbs：取自 Claude Code 2.1.121 的提取记录，179 条里保留 158 条，去掉约 20 条过难词和 1 条品牌梗。
-- 鲸鱼系 13 条：来自 [`dsh-deep-verbs`](https://github.com/Winter-And-You-Gone/dsh-deep-verbs)（MIT）。
+- 鲸鱼系 13 条：来自 [`dsh-deep-verbs`](https://github.com/Winter-And-You-Gone/dsh-deep-verbs)（MIT）。实现思路也参考了它。
 - 中国本土文化段：原创，成语、典故、诗词意象，加上生活和网络用语。
 
 ## 开发

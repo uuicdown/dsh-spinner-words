@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="250" viewBox="0 0 760 250" role="img" aria-label="状态行示意图：改前为「深度求索中…」，改后为「凿壁偷光中…」及对应英文">
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#14161b"/>
+      <stop offset="100%" stop-color="#101216"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6f9fe6"/>
+      <stop offset="38%" stop-color="#7fb2ff"/>
+      <stop offset="50%" stop-color="#e8f1ff"/>
+      <stop offset="62%" stop-color="#7fb2ff"/>
+      <stop offset="100%" stop-color="#6f9fe6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="760" height="250" rx="14" fill="url(#card)"/>
+  <rect x="0.5" y="0.5" width="759" height="249" rx="14" fill="none" stroke="#232733"/>
+
+  <text x="32" y="42" fill="#7c8595" font-family="-apple-system,'Segoe UI','Microsoft YaHei',sans-serif" font-size="12" letter-spacing="1">运行状态行</text>
+
+  <!-- 改前 -->
+  <g>
+    <g transform="translate(32,64) scale(0.667)" fill="#5a6272"><path d="M11.5 6c-3.9 0-7 2.9-7 6.4 0 2.9 2.5 5.1 5.8 5.1h3.6c2.4 0 4.2-1.4 4.2-3.1 0-1.3-.9-2.4-2.3-2.8C15.3 8.3 13.6 6 11.5 6z"/><path d="M17.6 11.2l3.4-2.3v8.6l-3.4-2.3z"/></g>
+    <text x="62" y="77" fill="#6b7280" font-family="-apple-system,'Segoe UI','Microsoft YaHei',sans-serif" font-size="19">深度求索中…</text>
+    <text x="668" y="76" fill="#4b5261" font-family="ui-monospace,Consolas,monospace" font-size="11" text-anchor="end">改前</text>
+  </g>
+
+  <line x1="32" y1="98" x2="728" y2="98" stroke="#1c2029"/>
+
+  <!-- 改后 · 中文 -->
+  <g>
+    <g transform="translate(32,110) scale(0.667)" fill="#8fb6f5"><path d="M11.5 6c-3.9 0-7 2.9-7 6.4 0 2.9 2.5 5.1 5.8 5.1h3.6c2.4 0 4.2-1.4 4.2-3.1 0-1.3-.9-2.4-2.3-2.8C15.3 8.3 13.6 6 11.5 6z"/><path d="M17.6 11.2l3.4-2.3v8.6l-3.4-2.3z"/></g>
+    <text x="62" y="123" fill="url(#shine)" font-family="-apple-system,'Segoe UI','Microsoft YaHei',sans-serif" font-size="21" font-weight="600">凿壁偷光中…</text>
+    <text x="668" y="122" fill="#4b5261" font-family="ui-monospace,Consolas,monospace" font-size="11" text-anchor="end">改后 · 中文</text>
+  </g>
+
+  <line x1="32" y1="144" x2="728" y2="144" stroke="#1c2029"/>
+
+  <!-- 改后 · English -->
+  <g>
+    <g transform="translate(32,156) scale(0.667)" fill="#6e8bb8"><path d="M11.5 6c-3.9 0-7 2.9-7 6.4 0 2.9 2.5 5.1 5.8 5.1h3.6c2.4 0 4.2-1.4 4.2-3.1 0-1.3-.9-2.4-2.3-2.8C15.3 8.3 13.6 6 11.5 6z"/><path d="M17.6 11.2l3.4-2.3v8.6l-3.4-2.3z"/></g>
+    <text x="62" y="169" fill="#7fa9e0" font-family="-apple-system,'Segoe UI','Microsoft YaHei',sans-serif" font-size="17" font-weight="500">Chipping through the wall...</text>
+    <text x="668" y="168" fill="#4b5261" font-family="ui-monospace,Consolas,monospace" font-size="11" text-anchor="end">改后 · English</text>
+  </g>
+
+  <line x1="32" y1="192" x2="728" y2="192" stroke="#1c2029"/>
+  <text x="32" y="218" fill="#6b7280" font-family="-apple-system,'Segoe UI','Microsoft YaHei',sans-serif" font-size="12">同一条短语，点一下状态行切换语言。示意图，非真实截图。</text>
+</svg>
