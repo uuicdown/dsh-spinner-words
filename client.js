@@ -62,6 +62,7 @@ try {
 		window.__dshSpinnerWordsBaseTitle = typeof document !== "undefined" ? document.title : "";
 		window.__dshSpinnerWords = "module-loaded";
 		if (typeof document !== "undefined") document.title = "✅module-loaded · " + window.__dshSpinnerWordsBaseTitle;
+		if (typeof console !== "undefined") console.info("[dsh-spinner-words] module-loaded");
 	}
 } catch (e) { /* noop */ }
 
@@ -580,7 +581,10 @@ window.__ModuleLoader__.load({
 				attachToggle(host);
 				if (!claimedOnce) {
 					claimedOnce = true;
-					try { document.title = "✅claimed · " + (window.__dshSpinnerWordsBaseTitle || ""); } catch (e) { /* noop */ }
+					try {
+						document.title = "✅claimed · " + (window.__dshSpinnerWordsBaseTitle || "");
+						if (typeof console !== "undefined") console.info("[dsh-spinner-words] claimed a running row");
+					} catch (e) { /* noop */ }
 				}
 				// 此前已无活动状态行 = 新回合开场：从袋里取新的一条；
 				// 取完立刻置位，同一批挂载的多行（多会话并排）复用同一条。
@@ -674,6 +678,7 @@ window.__ModuleLoader__.load({
 			try {
 				window.__dshSpinnerWords = "applied";
 				if (typeof document !== "undefined") document.title = "✅applied · " + (window.__dshSpinnerWordsBaseTitle || "");
+				if (typeof console !== "undefined") console.info("[dsh-spinner-words] applied");
 			} catch (e) { /* noop */ }
 			if (document.body) start();
 			else document.addEventListener("DOMContentLoaded", start, { once: true });
