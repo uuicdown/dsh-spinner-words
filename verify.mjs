@@ -134,6 +134,12 @@ function host(text) {
   const root = { nodeType: 1, childNodes: [content] }
   const runningContent = { nodeType: 1, childNodes: [root] }
   const a11y = { nodeType: 1, childNodes: [a11yText] }
+  const iconEl = {
+    nodeType: 1,
+    attrs: {},
+    getAttribute(name) { return name in this.attrs ? this.attrs[name] : null },
+    setAttribute(name, value) { this.attrs[name] = value }
+  }
   const highlightSpan = { nodeType: 1, childNodes: [highlight] }
   const sweep = { nodeType: 1, childNodes: [highlightSpan] }
   const decoration = { nodeType: 1, childNodes: [sweep] }
@@ -146,7 +152,12 @@ function host(text) {
     childNodes: [a11y, runningContent, decoration],
     getAttribute: (name) => (name === 'data-chat-running' ? '' : null),
     hasAttribute: (name) => name === 'data-chat-running',
-    querySelector: (sel) => (sel === '[data-shimmer-text]' ? highlight : sel === '[role="status"]' ? a11y : null),
+    querySelector: (sel) => {
+      if (sel === '[data-shimmer-text]') return highlight
+      if (sel === '[role="status"]') return a11y
+      if (sel === '[class*="runningIcon"]') return iconEl
+      return null
+    },
     querySelectorAll: (sel) => {
       if (sel === '[data-shimmer-text]') return [highlight]
       if (sel === '*') return elements
@@ -157,6 +168,8 @@ function host(text) {
     _shimmer: highlight,
     _base: baseText,
     _a11y: a11y,
+    _icon: iconEl,
+    icon() { return iconEl.attrs['data-dsh-words-motion'] || '' },
     label() { return baseText.data },
     highlightLabel() { return highlight.attrs['data-shimmer-text'] },
     a11yLabel() { return a11yText.data },
@@ -203,6 +216,9 @@ const context = {
   },
   document: {
     body: {},
+    head: { appendChild() {} },
+    querySelector: () => null,
+    createElement: () => ({ setAttribute() {}, textContent: '', appendChild() {} }),
     querySelectorAll: (sel) => (sel === '[data-chat-running]' ? hosts.slice() : []),
     addEventListener(type, fn) { (docListeners[type] ||= []).push(fn) }
   }
@@ -242,6 +258,7 @@ assert.strictEqual(status.a11yLabel(), status.label(), '读屏用的 role=status
 assert.ok(status.title.includes('切换为 English') && status.title.includes('Alt'), '认领后应挂上"切换语言 + 编辑词池"提示')
 assert.strictEqual(status.style.cursor, 'pointer', '认领后应可点击')
 const zhLabel = status.label()
+assert.ok(status.icon(), '认领后必须给吉祥物分配一个语境动作（data-dsh-words-motion）')
 assert.strictEqual(status.highlightLabel(), zhLabel, '高光层的 data-shimmer-text 属性必须同步')
 ok(`认领成功，底层文本 + 高光属性 两处一致：${zhLabel}`)
 
@@ -358,7 +375,7 @@ assert.ok(src.includes('var ROTATE_MS = 0;'), '默认必须是「一回合一个
 ok('默认 ROTATE_MS = 0（想慢速轮换可自行改成毫秒数）')
 
 console.log('自定义词池')
-store['dsh-spinner-words:custom'] = JSON.stringify([['alpha thing', '甲中', '甲注脚'], ['beta thing', '乙中', '乙注脚']])
+store['dsh-spinner-words:custom'] = JSON.stringify([['alpha thing', '甲中', '甲注脚', 'spin']])
 hosts = []                                   // 结束上一回合
 observerCb([{ addedNodes: [] }])
 await micro()
@@ -366,11 +383,12 @@ const custom = host('深度求索中')            // 新回合开场必须从自
 hosts = [custom]
 observerCb([{ addedNodes: [custom] }])
 await micro()
-assert.ok(['甲中…', '乙中…'].includes(custom.label()), `自定义词池必须生效，实际 "${custom.label()}"`)
+assert.ok(['甲中…'].includes(custom.label()), `自定义词池必须生效，实际 "${custom.label()}"`)
 custom.fire('click')
-assert.ok(['Alpha thing...', 'Beta thing...'].includes(custom.label()), `自定义词池的英文侧必须对应，实际 "${custom.label()}"`)
+assert.ok(['Alpha thing...'].includes(custom.label()), `自定义词池的英文侧必须对应，实际 "${custom.label()}"`)
 assert.ok(custom.title.includes('注脚'), `词条第三项必须作为 hover 注解出现在 title 里，实际 "${custom.title}"`)
-ok(`自定义词池生效（含 hover 注解）：${custom.label()}`)
+assert.strictEqual(custom.icon(), 'spin', `词条第四项必须覆盖吉祥物动作，实际 "${custom.icon()}"`)
+ok(`自定义词池生效（含 hover 注解 + 指定动作）：${custom.label()} [${custom.icon()}]`)
 delete store['dsh-spinner-words:custom']
 
 console.log('词池解析')
@@ -380,5 +398,15 @@ assert.strictEqual(parsed.length, 3, `应解析出 3 条（跳过注释与空行
 assert.strictEqual(JSON.stringify(parsed[0]), JSON.stringify(['alpha', '甲']))
 assert.strictEqual(JSON.stringify(parsed[2]), JSON.stringify(['只有中文', '只有中文']), '只有一侧时两侧都用同一串')
 ok('parsePool：跳过注释空行、单侧兜底')
+
+console.log('语境动作')
+assert.strictEqual(bundle.motionFor('正在烘焙', 'Baking'), 'munch', '烘焙类应上下咀嚼式跳动')
+assert.strictEqual(bundle.motionFor('正在打洞', 'Burrowing'), 'dive', '打洞类应向下潜')
+assert.strictEqual(bundle.motionFor('正在旋转', 'Spinning'), 'spin', '旋转类应转圈')
+assert.strictEqual(bundle.motionFor('正在打盹', 'Napping'), 'doze', '打盹类应缓慢浮动')
+assert.strictEqual(bundle.motionFor('正在飞奔', 'Galloping'), 'dash', '奔跑类应左右急动')
+assert.strictEqual(bundle.motionFor('正在发光', 'Beaming'), 'glow', '发光类应明暗脉动')
+assert.strictEqual(bundle.motionFor('随便什么', 'Whatever'), 'swim', '没有匹配时回落到默认游动')
+ok('motionFor：烘焙/打洞/旋转/打盹/飞奔/发光 + 默认回落')
 
 console.log(`\n全部通过：${passed} 项检查`)

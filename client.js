@@ -450,7 +450,12 @@ window.__ModuleLoader__.load({
 						for (var i = 0; i < parsed.length; i++) {
 							var p = parsed[i];
 							if (p && typeof p[1] === "string" && p[1]) {
-								clean.push([String(p[0] || p[1]), p[1], typeof p[2] === "string" ? p[2] : ""]);
+								clean.push([
+									String(p[0] || p[1]),
+									p[1],
+									typeof p[2] === "string" ? p[2] : "",
+									typeof p[3] === "string" ? p[3] : ""
+								]);
 							}
 						}
 					}
@@ -468,6 +473,88 @@ window.__ModuleLoader__.load({
 			lastRaw = raw;
 			activePairs = poolPairs();
 			bag = [];
+		}
+
+		// ---- 小鲸鱼的动作：按词义挑选，让"姿态"符合语境 ----
+		// 只往图标元素写一个属性，具体的 keyframes 由注入的 CSS 驱动，
+		// 不动 React 管理的 DOM 树，重渲也不会打架。
+		var MOTION_ATTR = "data-dsh-words-motion";
+		var DEFAULT_MOTION = "swim";
+		var currentMotion = DEFAULT_MOTION;
+
+		// [关键词数组, 动作]，从上往下第一个命中者生效（顺序 = 优先级）
+		var MOTION_RULES = [
+			[["深潜", "潜水", "沉底", "打洞", "探洞", "挖洞", "沉底", "钓鱼"], "dive"],
+			[["睡", "打盹", "做梦", "发呆", "出神", "摆烂", "装死", "偷懒", "磨蹭", "磨叽", "磨洋工", "拖延", "打坐", "参禅"], "doze"],
+			[["想", "琢磨", "沉思", "苦想", "推演", "解谜", "掂量", "权衡", "定夺", "考量", "深思", "构想", "想象", "挠头", "犯迷糊", "破译", "推断"], "think"],
+			[["旋转", "回旋", "打旋", "绕飞", "转圈", "扭转", "蛇皮", "扭摆", "绕"], "spin"],
+			[["跑", "飞奔", "弹射", "跃迁", "扑", "俯冲", "乱窜", "窜", "小跑", "弹"], "dash"],
+			[["舞", "蹦迪", "摇摆", "踩点", "摇摇摆摆", "摇", "抖", "颤", "嗡嗡", "抖腿"], "shake"],
+			[["发光", "结晶", "显化", "升华", "光合", "点石成金", "喷彩虹", "冒泡", "电离", "亮"], "glow"],
+			[["烘焙", "焯水", "熬糖", "抹糖霜", "摆盘", "腌制", "醒面", "爆炒", "焖煮", "回火", "打发", "削皮", "调制", "下厨", "发酵", "酿造", "揉", "吃", "干饭", "泡面", "咖啡", "煮", "炖", "茶", "闷"], "munch"],
+			[["唱", "和声", "歌", "引吭"], "sing"],
+			[["打草稿", "翻阅", "翻书", "穷经", "读", "书", "谱写", "编排"], "peek"],
+			[["漫游", "溜达", "踱步", "散步", "云游", "蜿蜒", "流淌", "起伏", "游走", "悬浮", "风", "雨", "潮", "浪", "云"], "float"]
+		];
+
+		function motionFor(zh, en) {
+			var hay = (zh || "") + " " + (en || "");
+			for (var i = 0; i < MOTION_RULES.length; i++) {
+				var words = MOTION_RULES[i][0];
+				for (var k = 0; k < words.length; k++) {
+					if (hay.indexOf(words[k]) !== -1) return MOTION_RULES[i][1];
+				}
+			}
+			return DEFAULT_MOTION;
+		}
+
+		/** 第 4 项（可选）可手动指定动作，例如 ["x","正在转圈","", "spin"]。 */
+		function motionAt(idx) {
+			var p = activePairs[idx] || BASE_PAIRS[0];
+			return (p && typeof p[3] === "string" && p[3]) ? p[3] : motionFor(p[1], p[0]);
+		}
+
+		function ensureMotionCss() {
+			if (document.querySelector("style[data-dsh-words-motion-css]")) return;
+			var s = document.createElement("style");
+			s.setAttribute("data-dsh-words-motion-css", "");
+			s.textContent = "" +
+				"@keyframes dsw-swim{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-1px) rotate(-6deg)}}" +
+				"@keyframes dsw-dive{0%,100%{transform:translateY(-1px) rotate(-14deg)}50%{transform:translateY(1px) rotate(-22deg)}}" +
+				"@keyframes dsw-float{0%,100%{transform:translate3d(-1px,0,0)}50%{transform:translate3d(1px,-1px,0)}}" +
+				"@keyframes dsw-doze{0%,100%{transform:translateY(0) scale(1);opacity:.9}50%{transform:translateY(1px) scale(.94);opacity:.6}}" +
+				"@keyframes dsw-think{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(-15deg) translateY(-1px)}}" +
+				"@keyframes dsw-spin{to{transform:rotate(360deg)}}" +
+				"@keyframes dsw-dash{0%,100%{transform:translateX(-1px)}50%{transform:translateX(1px)}}" +
+				"@keyframes dsw-shake{0%,100%{transform:rotate(-6deg)}25%{transform:rotate(7deg)}75%{transform:rotate(-3deg)}}" +
+				"@keyframes dsw-glow{0%,100%{opacity:.55;transform:scale(.96)}50%{opacity:1;transform:scale(1.1)}}" +
+				"@keyframes dsw-munch{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(1px) scale(1.09)}}" +
+				"@keyframes dsw-sing{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(8deg) translateY(-1px)}}" +
+				"@keyframes dsw-peek{0%,100%{transform:translateX(0)}50%{transform:translateX(1px) rotate(4deg)}}" +
+				"[data-dsh-words-motion],[data-dsh-words-motion] svg,[data-dsh-words-motion] span{transform-origin:50% 60%;will-change:transform}" +
+				'[data-dsh-words-motion="swim"] svg{animation:dsw-swim 2.2s ease-in-out infinite}' +
+				'[data-dsh-words-motion="dive"] svg{animation:dsw-dive 2.6s ease-in-out infinite}' +
+				'[data-dsh-words-motion="float"] svg{animation:dsw-float 2.8s ease-in-out infinite}' +
+				'[data-dsh-words-motion="doze"] svg{animation:dsw-doze 3.4s ease-in-out infinite}' +
+				'[data-dsh-words-motion="think"] svg{animation:dsw-think 2.4s ease-in-out infinite}' +
+				'[data-dsh-words-motion="spin"] svg{animation:dsw-spin 2.4s linear infinite}' +
+				'[data-dsh-words-motion="dash"] svg{animation:dsw-dash .8s ease-in-out infinite}' +
+				'[data-dsh-words-motion="shake"] svg{animation:dsw-shake 1.1s ease-in-out infinite}' +
+				'[data-dsh-words-motion="glow"] svg{animation:dsw-glow 1.8s ease-in-out infinite}' +
+				'[data-dsh-words-motion="munch"] svg{animation:dsw-munch 1.4s ease-in-out infinite}' +
+				'[data-dsh-words-motion="sing"] svg{animation:dsw-sing 1.6s ease-in-out infinite}' +
+				'[data-dsh-words-motion="peek"] svg{animation:dsw-peek 2s ease-in-out infinite}' +
+				"@media (prefers-reduced-motion: reduce){[data-dsh-words-motion] svg{animation:none!important}}";
+			document.head.appendChild(s);
+		}
+
+		/** 把动作写到小吉祥物元素上（同值不写，避免每秒重渲白写）。 */
+		function applyMotion(host, motion) {
+			var icon = host.querySelector('[class*="runningIcon"]');
+			if (!icon || !motion) return false;
+			if (icon.getAttribute(MOTION_ATTR) === motion) return false;
+			icon.setAttribute(MOTION_ATTR, motion);
+			return true;
 		}
 
 		function labelFor(idx) {
@@ -509,6 +596,7 @@ window.__ModuleLoader__.load({
 			}
 			lastIndex = bag.pop();
 			currentGloss = glossFor(lastIndex);
+			currentMotion = motionAt(lastIndex);
 			return labelFor(lastIndex);
 		}
 
@@ -606,6 +694,7 @@ window.__ModuleLoader__.load({
 				first.data = label;
 				changed = true;
 			}
+			if (applyMotion(host, currentMotion)) changed = true;
 			return changed;
 		}
 
@@ -762,6 +851,7 @@ window.__ModuleLoader__.load({
 				if (tracked.has(host)) {
 					// 兜底：React 若把内置文案写回来了（属性或文本节点任一），恢复当前短语。
 					if (anchored && current !== null && !isAnchor(current)) setText(host, current);
+					applyMotion(host, currentMotion); // 图标元素被重渲替换时补回动作
 					continue;
 				}
 				if (!anchored) continue; // 不是思考状态行，不碰
@@ -884,6 +974,7 @@ window.__ModuleLoader__.load({
 
 		function start() {
 			refreshPool();
+			ensureMotionCss();
 			sweep();
 			// 点击接管放在 document 捕获阶段：状态行内部（React/行组件）可能
 			// stopPropagation，冒泡到元素上的监听就永远不触发（用户实测点不动）。
@@ -929,6 +1020,7 @@ window.__ModuleLoader__.load({
 
 		exports.inject = [];
 		exports.parsePool = parsePool; // 供编辑器与测试复用
+		exports.motionFor = motionFor; // 供测试校验"词义 → 动作"的映射
 		exports.apply = function () {
 			try {
 				window.__dshSpinnerWords = "applied";
