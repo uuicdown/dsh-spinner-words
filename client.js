@@ -674,13 +674,17 @@ window.__ModuleLoader__.load({
 
 			bar.appendChild(mkBtn("保存", function () {
 				var pairs = parsePool(ta.value);
+				var before = JSON.stringify(activePairs);
 				try {
 					if (pairs.length === 0) localStorage.removeItem(CUSTOM_KEY);
 					else localStorage.setItem(CUSTOM_KEY, JSON.stringify(pairs));
 				} catch (e) { /* noop */ }
 				refreshPool();
+				var after = JSON.stringify(activePairs);
 				closeEditor();
-				switchNow();
+				// 内容真的变了才换词：只改注释或空行时不该抽新词，
+				// 否则用户会误以为「保存导致换词」。
+				if (before !== after) switchNow();
 			}));
 			bar.appendChild(mkBtn("恢复默认", function () {
 				try { localStorage.removeItem(CUSTOM_KEY); } catch (e) { /* noop */ }
@@ -869,7 +873,7 @@ window.__ModuleLoader__.load({
 			scheduled = true;
 			Promise.resolve().then(function () {
 				scheduled = false;
-				sweep();
+				sweepThrottled();
 				var act = activityFlag;
 				activityFlag = false;
 				if (act) onActivity();
@@ -889,12 +893,55 @@ window.__ModuleLoader__.load({
 			if (pending && Date.now() - lastSwitchAt >= MIN_SWITCH_MS) switchNow();
 		}
 
+		// ---- 资源句柄：apply() 可能被调用多次（禁用重启用、热重载）----
+		// 旧实例必须先拆除，否则两套 document 监听叠加：点一次状态行触发两次
+		// onToggle（语言翻两次等于没翻），两个 current 还会争抢同一段文案。
+		var runtime = { observer: null, timer: null, listeners: [] };
+
+		function onDoc(type, fn) {
+			document.addEventListener(type, fn, true);
+			runtime.listeners.push([type, fn]);
+		}
+
+		function teardown() {
+			try {
+				if (runtime.observer) runtime.observer.disconnect();
+				if (runtime.timer) clearInterval(runtime.timer);
+				for (var i = 0; i < runtime.listeners.length; i++) {
+					document.removeEventListener(runtime.listeners[i][0], runtime.listeners[i][1], true);
+				}
+			} catch (e) { /* noop */ }
+			runtime = { observer: null, timer: null, listeners: [] };
+			tracked = new WeakSet();
+			seenRows = new WeakSet();
+			ownedText = new WeakSet();
+			current = null;
+			closeEditor();
+		}
+
+		// sweep 节流：常规批次最多 200ms 一次；一旦出现未认领的新行就立即执行，
+		// 保证回合开场的认领不会被延迟。restoreTextNodes 的即时路径不受这里影响。
+		var SWEEP_MS = 200;
+		var lastSweepAt = 0;
+
+		function sweepThrottled() {
+			var list = hostList();
+			var fresh = false;
+			for (var i = 0; i < list.length; i++) {
+				if (!tracked.has(list[i])) { fresh = true; break; }
+			}
+			var now = Date.now();
+			if (!fresh && now - lastSweepAt < SWEEP_MS) return;
+			lastSweepAt = now;
+			sweep();
+		}
+
 		function start() {
 			refreshPool();
 			sweep();
 			// 点击接管放在 document 捕获阶段：状态行内部（React/行组件）可能
 			// stopPropagation，冒泡到元素上的监听就永远不触发（用户实测点不动）。
-			document.addEventListener("click", function (e) {
+			onDoc("click", function (e) {
 				var host = hostFromEvent(e.target);
 				if (!host || !tracked.has(host)) return;
 				e.stopPropagation();
@@ -904,30 +951,32 @@ window.__ModuleLoader__.load({
 					return;
 				}
 				onToggle();
-			}, true);
+			});
 
-			// 双击 = 打开词池编辑器（不带修饰键也能进）
-			document.addEventListener("dblclick", function (e) {
+			// 双击 = 打开词池编辑器（不带修饰键也能进）。
+			// 注意：dblclick 不可取消，这里不调 preventDefault()。
+			onDoc("dblclick", function (e) {
 				var host = hostFromEvent(e.target);
 				if (!host || !tracked.has(host)) return;
 				e.stopPropagation();
-				e.preventDefault();
 				openEditor();
-			}, true);
+			});
 
 			// 键盘入口：Alt+E 打开词池编辑器。不依赖点击冒泡，行组件拦事件也照样能开。
-			document.addEventListener("keydown", function (e) {
-				if (!e || !e.altKey || e.ctrlKey || e.metaKey) return;
+			// e.repeat 必须过滤：按住不放会连续开/关编辑器（openEditor 是开关式）。
+			onDoc("keydown", function (e) {
+				if (!e || e.repeat || !e.altKey || e.ctrlKey || e.metaKey) return;
 				if (e.key === "e" || e.key === "E") {
 					e.preventDefault();
 					e.stopPropagation();
 					openEditor();
 				}
-			}, true);
-			setInterval(maintain, MAINTAIN_MS);
+			});
+			runtime.timer = setInterval(maintain, MAINTAIN_MS);
 			// childList：认领新挂载的状态行、捕获轮换事件；
 			// characterData：React 每秒回写「用时」到文本节点时立刻恢复（只筛锚点，代价 O(1)）。
-			new MutationObserver(onMutate).observe(document.body, {
+			runtime.observer = new MutationObserver(onMutate);
+			runtime.observer.observe(document.body, {
 				childList: true,
 				characterData: true,
 				subtree: true
@@ -936,7 +985,17 @@ window.__ModuleLoader__.load({
 
 		exports.inject = [];
 		exports.parsePool = parsePool; // 供编辑器与测试复用
+		exports.teardown = teardown;   // 宿主禁用/重载时可主动拆除实例
 		exports.apply = function () {
+			// 已有活实例就先拆掉：否则两套 document 捕获监听叠加，
+			// 点一次状态行会触发两次切换（语言翻两次等于没翻）。
+			try {
+				if (window.__dshSpinnerWordsInstance &&
+					typeof window.__dshSpinnerWordsInstance.teardown === "function") {
+					window.__dshSpinnerWordsInstance.teardown();
+				}
+				window.__dshSpinnerWordsInstance = { teardown: teardown };
+			} catch (e) { /* noop */ }
 			try {
 				window.__dshSpinnerWords = "applied";
 				window.__dshSpinnerWordsEditor = openEditor; // 控制台兜底入口

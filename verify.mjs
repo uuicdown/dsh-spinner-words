@@ -208,6 +208,7 @@ const context = {
   // 不能同步执行 fn：节流补切的 scheduleRelease 会自己重排，同步跑会无限递归。
   setTimeout: () => 0,
   setInterval: (fn) => { maintainFn = fn; return 0 },
+  clearInterval: () => {},
   localStorage: {
     getItem: (k) => (k in store ? store[k] : null),
     setItem: (k, v) => { store[k] = v }
@@ -215,6 +216,7 @@ const context = {
   MutationObserver: class {
     constructor(cb) { observerCb = cb }
     observe() {}
+    disconnect() {}
   },
   document: {
     body: {},
@@ -222,7 +224,12 @@ const context = {
     querySelector: () => null,
     createElement: () => ({ setAttribute() {}, textContent: '', appendChild() {} }),
     querySelectorAll: (sel) => (sel === '[data-chat-running]' ? hosts.slice() : []),
-    addEventListener(type, fn) { (docListeners[type] ||= []).push(fn) }
+    addEventListener(type, fn) { (docListeners[type] ||= []).push(fn) },
+    removeEventListener(type, fn) {
+      const list = docListeners[type] || []
+      const i = list.indexOf(fn)
+      if (i >= 0) list.splice(i, 1)
+    }
   }
 }
 
@@ -414,6 +421,22 @@ assert.strictEqual(JSON.stringify(parsed[0]), JSON.stringify(['alpha', '甲']))
 assert.strictEqual(JSON.stringify(parsed[2]), JSON.stringify(['只有中文', '只有中文']), '只有一侧时两侧都用同一串')
 ok('parsePool：跳过注释空行、单侧兜底')
 
+
+console.log('生命周期')
+assert.ok(typeof bundle.teardown === 'function', 'bundle 必须导出 teardown()')
+assert.ok(src.includes('__dshSpinnerWordsInstance'), '必须有实例守卫，重复 apply 时先拆旧实例')
+
+const clicksBefore = (docListeners.click || []).length
+assert.strictEqual(clicksBefore, 1, `首次 apply 后应只有一套 document click 监听，实际 ${clicksBefore}`)
+bundle.apply()
+const clicksAfter = (docListeners.click || []).length
+assert.strictEqual(clicksAfter, clicksBefore, '重复 apply 必须先拆除旧实例，不能叠加 document 监听')
+ok('重复 apply 不叠加监听（旧实例被 teardown）')
+
+assert.ok(src.includes('e.repeat'), 'Alt+E 必须过滤长按重复事件')
+assert.ok(src.includes('SWEEP_MS'), 'sweep 必须有节流')
+assert.ok(!/addEventListener\("dblclick"[\s\S]{0,220}?preventDefault\(\)/.test(src), 'dblclick 不可取消，不应调 preventDefault()')
+ok('长按重复 / sweep 节流 / dblclick 误用 preventDefault 三处已修正')
 
 console.log(`
 全部通过：${passed} 项检查`)
