@@ -662,6 +662,31 @@ window.__ModuleLoader__.load({
 			return hit;
 		}
 
+		/** 从文本节点向上找状态行容器（React 改文本时只有 mutation.target，没有 addedNodes）。 */
+		function hostOf(node) {
+			var n = node && node.parentNode;
+			while (n) {
+				if (n.getAttribute && n.getAttribute("data-chat-running") !== null) return n;
+				n = n.parentNode;
+			}
+			return null;
+		}
+
+		/** React 每秒把「用时」写回底层文本节点：立刻恢复，不等 3 秒维护扫描，
+		 *  否则用户会看到闪回内置文案。 */
+		function restoreTextNodes(mutations) {
+			for (var i = 0; i < mutations.length; i++) {
+				var m = mutations[i];
+				if (m.type !== "characterData") continue;
+				var node = m.target;
+				if (!node || node.nodeType !== 3) continue;
+				if (!isAnchor(node.data)) continue; // 我们自己的写入不是锚点，不会自激
+				var host = hostOf(node);
+				if (!host || !tracked.has(host)) continue;
+				if (current !== null && !isAnchor(current)) setText(host, current);
+			}
+		}
+
 		function collectActivity(mutations) {
 			var hit = false;
 			for (var i = 0; i < mutations.length; i++) {
@@ -679,6 +704,7 @@ window.__ModuleLoader__.load({
 		var scheduled = false;
 		var activityFlag = false;
 		function onMutate(mutations) {
+			restoreTextNodes(mutations);
 			if (collectActivity(mutations)) activityFlag = true;
 			if (scheduled) return;
 			scheduled = true;
@@ -701,12 +727,11 @@ window.__ModuleLoader__.load({
 		function start() {
 			sweep();
 			setInterval(maintain, MAINTAIN_MS);
-			// 只订阅 childList：认领只关心"新挂载的状态行"、轮换只关心
-			// "新挂载的对话行"这类结构变化；characterData 会让流式输出的
-			// 每次文本变更（含秒表每秒更新、每个流式 token）都触发一次
-			// 全文档 querySelectorAll 扫描。
+			// childList：认领新挂载的状态行、捕获轮换事件；
+			// characterData：React 每秒回写「用时」到文本节点时立刻恢复（只筛锚点，代价 O(1)）。
 			new MutationObserver(onMutate).observe(document.body, {
 				childList: true,
+				characterData: true,
 				subtree: true
 			});
 		}

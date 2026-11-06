@@ -46,6 +46,8 @@ assert.ok(
 assert.ok(src.includes('lang = "zh"'), '默认语言必须是中文')
 assert.ok(pkg.dsh?.bundle?.patch, 'package.json 必须声明 dsh.bundle.patch')
 assert.ok(src.includes('__dshSpinnerWords'), '必须有可观测的加载标记 __dshSpinnerWords（区分"没加载"与"没认领"）')
+assert.ok(src.includes('characterData: true'), '必须订阅 characterData，否则 React 每秒回写文本时我们收不到通知（会闪回内置文案）')
+assert.ok(src.includes('"characterData"'), 'onMutate 里必须处理 characterData mutation')
 assert.ok(pkg.dsh?.client?.platform === 'web', 'package.json 必须声明 dsh.client.platform = web')
 assert.ok(pkg.exports?.['./client'], 'package.json 必须有 exports["./client"]')
 ok('bundle 包裹 / 模块 id / 锚点 / 属性改写 / 守卫 / 默认中文 / 清单声明')
@@ -296,6 +298,20 @@ timed.relabel('深度求索中，用时 13s ···') // 模拟 React 每秒回�
 maintainFn()
 assert.strictEqual(timed.label(), steady, 'React 回写计时后，维护扫描必须恢复当前短语')
 ok('React 回写计时后能被恢复')
+
+// 实时兜底：React 改动文本节点会立刻产生 characterData mutation，
+// 不应该等 3 秒维护扫描（否则用户会看到闪回内置文案）。
+const liveHost = host('深度求索中')
+liveHost._base.parentNode = liveHost // 让 hostOf() 能向上找到容器（真实 DOM 里本来就有）
+hosts = [liveHost]
+observerCb([{ addedNodes: [liveHost] }])
+await micro()
+const liveLabel = liveHost.label()
+liveHost._base.data = '深度求索中，用时 20s ···' // React 写入
+observerCb([{ type: 'characterData', target: liveHost._base, addedNodes: [] }])
+await micro()
+assert.strictEqual(liveHost.label(), liveLabel, '文本节点被 React 改写后必须立刻恢复，不能等维护扫描')
+ok('characterData 实时恢复（无闪回窗口）')
 
 // 隐藏行（holding）不该被当成新回合
 const holdingHost = host('深度求索中')
