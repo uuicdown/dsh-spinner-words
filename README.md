@@ -15,12 +15,12 @@ Chipping through the wall...  ← 同一条短语换语言，不重新抽取
 深潜中…（1分23秒）            ← 右侧计时照常走，不受影响
 ```
 
-## 词池构成（共 288 条，全部 [英文, 中文] 成对）
+## 词池构成（共 287 条，全部 [英文, 中文]（其中 29 条带第三项典故注脚））
 
 | 段 | 条数 | 内容 |
 | --- | ---: | --- |
 | 鲸鱼系 | 13 | 来自 `dsh-deep-verbs` 的原创：`deep diving` / `deep seeking` / `deep breaching` … |
-| Claude Code | 159 | Claude Code 2.1.121 官方 179 条 spinner verbs，剔掉约 20 条过难词（`Bloviating`、`Flibbertigibbeting`、`Prestidigitating`、`Sock-hopping`、`Whatchamacalliting` …）后原样保留，词形一字未改 |
+| Claude Code | 158 | Claude Code 2.1.121 官方 179 条 spinner verbs，剔掉约 20 条过难词（`Bloviating`、`Flibbertigibbeting`、`Prestidigitating`、`Sock-hopping`、`Whatchamacalliting` …）后原样保留，词形一字未改 |
 | 中国本土·雅 | 86 | 成语 / 典故 / 诗词意象：凿壁偷光、韦编三绝、庖丁解牛、目无全牛、拨云见日、静水深流、采菊东篱、一蓑烟雨、大江东去 … |
 | 中国本土·俗 | 30 | 生活场景与网络梗：带薪思考、憋大招、盘它、摆烂、已读乱回、神游太虚、佛系推进 … |
 
@@ -28,7 +28,7 @@ Chipping through the wall...  ← 同一条短语换语言，不重新抽取
 
 ## 行为细节
 
-- **洗牌袋抽取**：一袋 288 个索引抽完才重洗，袋内不重复，袋与袋交界也不连出同一条。
+- **洗牌袋抽取**：一袋 287 个索引抽完才重洗，袋内不重复，袋与袋交界也不连出同一条。
 - **一回合一个词**（对齐 Claude Code）：每次请求开场从袋里随机抽一条，整个回合保持不动。Claude Code 的「长任务定期换词」至今仍是一条 feature request（[anthropics/claude-code#83521](https://github.com/anthropics/claude-code/issues/83521)），不是默认行为。想慢速轮换就把 `ROTATE_MS` 设成毫秒数，例如 `20000` = 每 20 秒换一条（0 = 回合内不换）。
 - **多会话并排**：同一时刻所有活动状态行显示同一条，切换同步。
 - **双语切换**：点击状态行中英互切，同一条短语只换语言、不重新抽取；选择写入 `localStorage`（`dsh-spinner-words:lang`），重载后恢复。默认**中文**。
@@ -86,7 +86,7 @@ pwsh install.ps1            # 或 powershell -ExecutionPolicy Bypass -File insta
 - 一行一条 `英文 | 中文`，`#` 开头是注释，空行忽略
 - 只写一侧也可以：`只有中文` 会两侧都用这一串
 - 「保存」写入 `localStorage`（键 `dsh-spinner-words:custom`），**下一个回合起生效**
-- 「恢复默认」清空覆盖，回到内置 288 条
+- 「恢复默认」清空覆盖，回到内置 287 条
 
 保存后整份词池以你的版本为准（内置池升级不会自动合并）；想拿新词就点「恢复默认」再改一遍。
 控制台兜底入口：`window.__dshSpinnerWordsEditor()`。
@@ -111,7 +111,7 @@ node verify.mjs
 `node:vm` + 极简 DOM shim 驱动真实 bundle，不需要浏览器。覆盖：
 
 1. 静态契约（`__ModuleLoader__` 包裹、模块 id = 包名、锚点、同值守卫、默认中文、清单声明）
-2. 词池数据（288 条成对、英文/中文各自不重复、分段条数、雅 ≥ 俗×2）
+2. 词池数据（287 条成对、英文/中文各自不重复、分段条数、雅 ≥ 俗×2）
 3. 认领与语言（中文默认 → 点击切英文 → 再点回同一条中文）
 4. 轮换与节流（31 次无连续重复；<3s 事件不换词）
 5. 防写入风暴（文案未变时维护扫描零写入）

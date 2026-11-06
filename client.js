@@ -125,7 +125,7 @@ window.__ModuleLoader__.load({
 			["deep diving", "深潜中"],
 			["deep seeking", "深度求索中"],
 			["deep delving", "刨根问底中"],
-			["deep surfacing", "喷彩虹中"],
+			["deep spouting", "喷彩虹中"],
 			["deep breaching", "跃出海面中"],
 			["deep bubbling", "海底冒泡中"],
 			["deep singing", "引吭高歌中"],
@@ -138,17 +138,17 @@ window.__ModuleLoader__.load({
 
 			// ======== 2. Claude Code spinner verbs（2.1.121，剔难词后 159 条）========
 			["accomplishing", "收尾中"],
-			["actioning", "动手干中"],
+			["taking action", "动手干中"],
 			["actualizing", "落实中"],
 			["architecting", "搭架构中"],
 			["baking", "烘焙中"],
 			["beaming", "发光中"],
 			["beboppin'", "摇摆中"],
-			["befuddling", "犯迷糊中"],
+			["befuddled", "犯迷糊中"],
 			["billowing", "翻涌中"],
 			["blanching", "焯水中"],
 			["boogieing", "蹦迪中"],
-			["boondoggling", "瞎忙活中"],
+			["doing busywork", "瞎忙活中"],
 			["bootstrapping", "自举中"],
 			["brewing", "酿造中"],
 			["burrowing", "打洞中"],
@@ -157,14 +157,13 @@ window.__ModuleLoader__.load({
 			["caramelizing", "熬糖中"],
 			["cascading", "倾泻中"],
 			["catapulting", "弹射中"],
-			["cerebrating", "开动脑筋中"],
-			["channeling", "通灵中"],
+			["putting on the thinking cap", "开动脑筋中"],
+			["channeling spirits", "通灵中"],
 			["choreographing", "编舞中"],
 			["churning", "搅动中"],
-			["clauding", "克劳德中"],
 			["coalescing", "聚拢中"],
 			["cogitating", "苦想中"],
-			["combobulating", "拼装中"],
+			["assembling", "拼装中"],
 			["composing", "谱写中"],
 			["computing", "运算中"],
 			["concocting", "调制中"],
@@ -180,22 +179,22 @@ window.__ModuleLoader__.load({
 			["deliberating", "权衡中"],
 			["determining", "定夺中"],
 			["dilly-dallying", "磨蹭中"],
-			["discombobulating", "打乱重来中"],
+			["resetting", "打乱重来中"],
 			["doing", "干活中"],
 			["doodling", "涂鸦中"],
 			["drizzling", "细雨飘落中"],
 			["ebbing", "退潮中"],
-			["effecting", "促成中"],
+			["bringing about", "促成中"],
 			["elucidating", "释义中"],
 			["embellishing", "添彩中"],
-			["enchanting", "施法中"],
+			["casting a spell", "施法中"],
 			["envisioning", "构想中"],
 			["evaporating", "蒸发中"],
 			["fermenting", "发酵中"],
 			["finagling", "钻营中"],
-			["flambéing", "喷火中"],
+			["blowtorching", "喷火中"],
 			["flowing", "流淌中"],
-			["flummoxing", "挠头中"],
+			["flummoxed", "挠头中"],
 			["fluttering", "扑棱中"],
 			["forging", "锻造中"],
 			["forming", "成形中"],
@@ -207,7 +206,7 @@ window.__ModuleLoader__.load({
 			["generating", "生成中"],
 			["gesticulating", "比划中"],
 			["germinating", "发芽中"],
-			["gitifying", "提交中"],
+			["committing", "提交中"],
 			["grooving", "踩点中"],
 			["gusting", "阵风中"],
 			["harmonizing", "和声中"],
@@ -215,8 +214,8 @@ window.__ModuleLoader__.load({
 			["hatching", "孵化中"],
 			["herding", "放牧中"],
 			["honking", "鸣笛中"],
-			["hyperspacing", "跃迁中"],
-			["ideating", "脑暴中"],
+			["jumping to hyperspace", "跃迁中"],
+			["brainstorming", "脑暴中"],
 			["imagining", "想象中"],
 			["improvising", "即兴中"],
 			["incubating", "酝酿中"],
@@ -240,8 +239,8 @@ window.__ModuleLoader__.load({
 			["nucleating", "成核中"],
 			["orbiting", "绕飞中"],
 			["orchestrating", "编排中"],
-			["osmosing", "渗透中"],
-			["perambulating", "踱步中"],
+			["seeping", "渗透中"],
+			["pacing", "踱步中"],
 			["percolating", "渗滤中"],
 			["perusing", "翻阅中"],
 			["philosophising", "论道中"],
@@ -254,9 +253,9 @@ window.__ModuleLoader__.load({
 			["proofing", "醒面中"],
 			["propagating", "传播中"],
 			["puttering", "磨叽中"],
-			["puzzling", "解谜中"],
-			["recombobulating", "重整中"],
-			["reticulating", "编织中"],
+			["solving puzzles", "解谜中"],
+			["reassembling", "重整中"],
+			["reticulating", "正在编制样条"],
 			["roosting", "归巢中"],
 			["ruminating", "反刍中"],
 			["sautéing", "爆炒中"],
@@ -278,7 +277,7 @@ window.__ModuleLoader__.load({
 			["thinking", "思考中"],
 			["thundering", "轰隆中"],
 			["tinkering", "敲敲打打中"],
-			["tomfoolering", "犯傻中"],
+			["fooling around", "犯傻中"],
 			["transfiguring", "变形中"],
 			["transmuting", "点石成金中"],
 			["twisting", "扭转中"],
@@ -289,7 +288,7 @@ window.__ModuleLoader__.load({
 			["waddling", "摇摇摆摆中"],
 			["wandering", "漫游中"],
 			["warping", "扭曲中"],
-			["whirlpooling", "打旋涡中"],
+			["whirling", "打旋涡中"],
 			["whirring", "嗡嗡转中"],
 			["whisking", "打发中"],
 			["working", "工作中"],
@@ -298,20 +297,20 @@ window.__ModuleLoader__.load({
 			["zigzagging", "蛇皮走位中"],
 
 			// ======== 3. 中国本土文化·雅（成语 / 典故 / 诗词意象）========
-			["chipping through the wall", "凿壁偷光中"],
-			["hair tied to the beam", "悬梁刺股中"],
-			["hair white from the classics", "皓首穷经中"],
-			["wearing out the book straps", "韦编三绝中"],
+			["chipping through the wall", "凿壁偷光中", "boring a hole in the wall to steal a neighbor's lamplight"],
+			["hair tied to the beam", "悬梁刺股中", "tying one's hair to the beam and prodding one's thigh with an awl"],
+			["studying the classics", "正在穷经", "studying the classics until one's hair turns white"],
+			["reading through the book", "正在翻书", "wearing out the leather book straps three times"],
 			["burning oil to lengthen the day", "焚膏继晷中"],
 			["strolling by candlelight", "秉烛夜游中"],
 			["reading under the lamp", "挑灯夜读中"],
 			["old lamp and yellowed pages", "青灯黄卷中"],
-			["grinding a rod into a needle", "磨杵成针中"],
+			["grinding a rod into a needle", "磨杵成针中", "grinding an iron rod into a needle"],
 			["dripping water piercing stone", "滴水穿石中"],
 			["the slow bird flies first", "笨鸟先飞中"],
 			["still water runs deep", "静水深流中"],
 			["clouds drifting, water flowing", "行云流水中"],
-			["parting clouds to the sun", "拨云见日中"],
+			["parting clouds to the sun", "拨云见日中", "parting the clouds to see the sun"],
 			["unwinding the silk cocoon", "抽丝剥茧中"],
 			["following the vine to the melon", "顺藤摸瓜中"],
 			["tracing back to the source", "追根溯源中"],
@@ -319,61 +318,61 @@ window.__ModuleLoader__.load({
 			["chewing on the characters", "咬文嚼字中"],
 			["measuring phrase by phrase", "字字计较中"],
 			["pao ding carving the ox", "庖丁解牛中"],
-			["the blade gliding with room", "游刃有余中"],
-			["the bamboo already in mind", "胸有成竹中"],
+			["the blade gliding with room", "游刃有余中", "the blade gliding with plenty of room"],
+			["the bamboo already in mind", "胸有成竹中", "the bamboo already complete in mind"],
 			["seeing no whole ox", "目无全牛中"],
-			["the axe whirling into wind", "运斤成风中"],
+			["the axe whirling into wind", "运斤成风中", "whirling the axe so fast it becomes wind"],
 			["great skill looks clumsy", "大巧若拙中"],
-			["the great way is simple", "大道至简中"],
-			["the highest good is water", "上善若水中"],
-			["the loudest note is silence", "大音希声中"],
-			["the greatest form has no shape", "大象无形中"],
+			["mulling over \"the great way is simple\"", "正在悟大道至简"],
+			["taking in \"the highest good is like water\"", "正在体会上善若水", "the highest good is like water"],
+			["listening for the great sound", "正在听大音希声"],
+			["pondering \"the greatest form has no shape\"", "正在琢磨大象无形"],
 			["holding to the uncarved block", "抱朴守拙中"],
-			["back to the plain and true", "返璞归真中"],
-			["forgetting self and thing", "物我两忘中"],
-			["prying into things to know", "格物致知中"],
-			["the old, revisited, renews", "温故知新中"],
-			["thinking carefully, judging clear", "慎思明辨中"],
-			["learning wide, acting firm", "博学笃行中"],
+			["returning to the plain and true", "正在返璞归真", "returning to the plain and true"],
+			["losing myself", "正在忘我", "forgetting both self and things"],
+			["prying into things to know", "格物致知中", "investigating things to attain knowledge"],
+			["the old, revisited, renews", "温故知新中", "reviewing the old to learn the new"],
+			["thinking carefully, judging clear", "慎思明辨中", "thinking carefully and judging clearly"],
+			["learning wide, acting firm", "博学笃行中", "learning widely and acting firmly"],
 			["steeping and savouring", "涵泳玩索中"],
-			["clarity poured over the crown", "醍醐灌顶中"],
-			["the blocked mind opens", "茅塞顿开中"],
-			["suddenly the vista opens", "豁然开朗中"],
+			["getting the point", "正在被点醒", "clarified butter poured over the crown (sudden enlightenment)"],
+			["having a breakthrough", "正在开窍"],
+			["figuring it out", "正在想通"],
 			["willows dark, flowers bright", "柳暗花明中"],
 			["a winding path to quiet", "曲径通幽中"],
 			["another sky behind the door", "别有洞天中"],
 			["climbing high to see far", "登高望远中"],
-			["the fourfold diagnosis", "望闻问切中"],
-			["matching the remedy", "对症下药中"],
+			["the fourfold diagnosis", "望闻问切中", "observing, listening, questioning, and pulse-taking"],
+			["matching the remedy", "对症下药中", "matching the remedy to the illness"],
 			["planning inside the tent", "运筹帷幄中"],
 			["deploying the formations", "排兵布阵中"],
-			["walking the sand table", "沙盘推演中"],
+			["walking the sand table", "沙盘推演中", "walking through the sand table exercise"],
 			["thinking beyond the horizon", "深谋远虑中"],
-			["mending before the rain", "未雨绸缪中"],
-			["turning it thrice before moving", "三思而行中"],
+			["mending before the rain", "未雨绸缪中", "mending the roof before it rains"],
+			["turning it thrice before moving", "三思而行中", "turning it over three times before acting"],
 			["plan settled, then move", "谋定后动中"],
 			["one drumbeat of effort", "一鼓作气中"],
 			["deep store, light release", "厚积薄发中"],
-			["ten years for one blade", "十年磨一剑中"],
-			["water arrives, the channel forms", "水到渠成中"],
-			["the melon drops when ripe", "瓜熟蒂落中"],
+			["grinding the sword", "正在磨一剑", "ten years to grind one blade"],
+			["waiting for the channel to form", "正在等水到渠成", "when water arrives, the channel forms"],
+			["waiting for the melon to drop when ripe", "正在等瓜熟蒂落"],
 			["waiting for the bloom", "静待花开中"],
 			["chewing it slowly", "细嚼慢咽中"],
 			["tea by the stove", "围炉煮茶中"],
 			["tea and talk", "品茗论道中"],
 			["incense lit, qin played", "焚香抚琴中"],
-			["rain on banana leaves", "雨打芭蕉中"],
+			["listening to rain on banana leaves", "正在听雨打芭蕉"],
 			["listening to the rain", "听雨中"],
 			["watching the clouds pass", "观云中"],
 			["raising a cup to the moon", "举杯邀月中"],
-			["three of us, me and my shadow", "对影成三人中"],
-			["chrysanthemums by the east hedge", "采菊东篱中"],
-			["the mountain comes into view", "悠然见山中"],
+			["making three with my shadow", "正在对影成三人", "raising a cup to the moon, my shadow and I make three"],
+			["chrysanthemums by the east hedge", "采菊东篱中", "picking chrysanthemums by the east hedge"],
+			["the mountain comes into view", "悠然见山中", "the southern mountain comes into view"],
 			["one straw cloak in the drizzle", "一蓑烟雨中"],
 			["bamboo staff and straw sandals", "竹杖芒鞋中"],
-			["the great river runs east", "大江东去中"],
-			["sharing the moon a thousand li", "千里共婵娟中"],
-			["sunset glow and a lone duck", "落霞孤鹜中"],
+			["watching the great river run east", "正在看大江东去"],
+			["gazing at the moon", "正在望月", "sharing the moon a thousand li apart"],
+			["watching sunset glow and a lone duck", "正在看落霞孤鹜"],
 			["grinding ink, laying paper", "磨墨铺纸中"],
 			["the brush flies, the ink splashes", "挥毫泼墨中"],
 			["drafting it in the belly", "打腹稿中"],
@@ -382,22 +381,22 @@ window.__ModuleLoader__.load({
 			["coiled and ready", "蓄势待发中"],
 			["seated in meditation", "参禅入定中"],
 			["deep tunnels, full granaries", "深挖洞广积粮中"],
-			["crossing the river by feel", "摸石头过河中"],
+			["crossing the river by feel", "摸石头过河中", "crossing the river by feeling the stones"],
 			["sealed away for cultivation", "闭关修炼中"],
 
 			// ======== 4. 中国本土文化·俗（生活场景 / 网络梗）========
 			["getting paid to think", "带薪思考中"],
-			["charging the big move", "憋大招中"],
+			["charging up the ultimate move", "憋大招中"],
 			["working it over", "盘它中"],
 			["rolling up the sleeves", "撸起袖子中"],
 			["eating the melon", "吃瓜中"],
-			["clocking in, soul and all", "打工魂燃烧中"],
-			["meeting till the brain dies", "开会开到宕机中"],
+			["clocking in with soul on fire", "打工魂燃烧中"],
+			["meeting until the brain crashes", "开会开到宕机中"],
 			["playing dead", "装死中"],
 			["procrastinating", "拖延症发作中"],
 			["letting it rot", "摆烂中"],
 			["grabbing a bite", "干饭中"],
-			["waiting on instant noodles", "等泡面中"],
+			["waiting for instant noodles", "等泡面中"],
 			["running on coffee", "咖啡续命中"],
 			["pulling an all-nighter", "熬夜中"],
 			["paddling along", "划水中"],
@@ -406,7 +405,7 @@ window.__ModuleLoader__.load({
 			["replying at random", "已读乱回中"],
 			["a big idea brewing", "一个大想法酝酿中"],
 			["leave me to think", "想静静中"],
-			["don't rush me", "别催了在想了"],
+			["don't rush me, I'm thinking", "别催了在想了"],
 			["going with the flow", "佛系推进中"],
 			["leaving it to fate", "随缘中"],
 			["roaming free", "云游中"],
@@ -450,7 +449,9 @@ window.__ModuleLoader__.load({
 					if (Array.isArray(parsed)) {
 						for (var i = 0; i < parsed.length; i++) {
 							var p = parsed[i];
-							if (p && typeof p[1] === "string" && p[1]) clean.push([String(p[0] || p[1]), p[1]]);
+							if (p && typeof p[1] === "string" && p[1]) {
+								clean.push([String(p[0] || p[1]), p[1], typeof p[2] === "string" ? p[2] : ""]);
+							}
 						}
 					}
 					if (clean.length > 0) return clean;
@@ -479,6 +480,21 @@ window.__ModuleLoader__.load({
 		//      袋与袋交界处换掉尾部，避免跨袋连续同一条 ----
 		var bag = [];
 		var lastIndex = -1;
+		var currentGloss = "";
+
+		/** 第 3 项（可选）= 完整典故，只进 hover 注解，不进状态行（长句会撑行）。 */
+		function glossFor(idx) {
+			var p = activePairs[idx];
+			return (p && typeof p[2] === "string") ? p[2] : "";
+		}
+
+		/** 把当前词条的注解写进所有活动状态行的 title。 */
+		function syncTitles() {
+			var live = liveStatuses();
+			for (var i = 0; i < live.length; i++) {
+				live[i].title = currentGloss ? currentGloss + " · " + toggleHint() : toggleHint();
+			}
+		}
 		function nextPhrase() {
 			if (bag.length === 0) {
 				bag = activePairs.map(function (_, i) { return i; });
@@ -492,6 +508,7 @@ window.__ModuleLoader__.load({
 				}
 			}
 			lastIndex = bag.pop();
+			currentGloss = glossFor(lastIndex);
 			return labelFor(lastIndex);
 		}
 
@@ -611,10 +628,8 @@ window.__ModuleLoader__.load({
 			lastSwitchAt = Date.now();
 			pending = false;
 			var live = liveStatuses();
-			for (var j = 0; j < live.length; j++) {
-				setText(live[j], current);
-				live[j].title = toggleHint();
-			}
+			for (var j = 0; j < live.length; j++) setText(live[j], current);
+			syncTitles();
 		}
 		// ---- 词池编辑器（Alt+点击状态行，或控制台 window.__dshSpinnerWordsEditor()）----
 		var editorEl = null;
@@ -704,6 +719,7 @@ window.__ModuleLoader__.load({
 			current = nextPhrase();
 			lastSwitchAt = Date.now();
 			for (var j = 0; j < live.length; j++) setText(live[j], current);
+			syncTitles();
 		}
 
 		/** 轮换事件入口：默认 ROTATE_MS = 0，回合内一律不换词（一回合一个词）。
@@ -770,6 +786,7 @@ window.__ModuleLoader__.load({
 					pending = false;
 				}
 				setText(host, current);
+				syncTitles();
 			}
 		}
 

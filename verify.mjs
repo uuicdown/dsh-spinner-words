@@ -66,11 +66,15 @@ assert.ok(Array.isArray(PAIRS) && PAIRS.length > 200, `词池要大：实际 ${P
 const seenEn = new Set()
 const seenZh = new Set()
 for (const pair of PAIRS) {
-  assert.ok(Array.isArray(pair) && pair.length === 2, `词条必须是 [en, zh] 二元组：${JSON.stringify(pair)}`)
-  const [en, zh] = pair
+  assert.ok(Array.isArray(pair) && (pair.length === 2 || pair.length === 3),
+    `词条必须是 [en, zh] 或 [en, zh, gloss]：${JSON.stringify(pair)}`)
+  const [en, zh, gloss] = pair
   assert.ok(typeof en === 'string' && en.trim().length > 0, `英文不能为空：${JSON.stringify(pair)}`)
   assert.ok(typeof zh === 'string' && zh.trim().length > 0, `中文不能为空：${JSON.stringify(pair)}`)
-  assert.ok(en === en.toLowerCase(), `英文必须存小写（展示时首字母大写）：${en}`)
+  if (pair.length === 3) {
+    assert.ok(typeof gloss === 'string' && gloss.trim().length > 0, `注脚不能是空串：${JSON.stringify(pair)}`)
+  }
+  assert.strictEqual(en.charAt(0), en.charAt(0).toLowerCase(), `英文首字母必须小写（展示时自动大写）：${en}`)
   assert.ok(!/\.\.\./.test(en), `英文不要带省略号（展示时自动加）：${en}`)
   assert.ok(!/…/.test(zh), `中文不要带省略号（展示时自动加）：${zh}`)
   assert.ok(!seenEn.has(en), `英文重复：${en}`)
@@ -354,7 +358,7 @@ assert.ok(src.includes('var ROTATE_MS = 0;'), '默认必须是「一回合一个
 ok('默认 ROTATE_MS = 0（想慢速轮换可自行改成毫秒数）')
 
 console.log('自定义词池')
-store['dsh-spinner-words:custom'] = JSON.stringify([['alpha thing', '甲中'], ['beta thing', '乙中']])
+store['dsh-spinner-words:custom'] = JSON.stringify([['alpha thing', '甲中', '甲注脚'], ['beta thing', '乙中', '乙注脚']])
 hosts = []                                   // 结束上一回合
 observerCb([{ addedNodes: [] }])
 await micro()
@@ -365,7 +369,8 @@ await micro()
 assert.ok(['甲中…', '乙中…'].includes(custom.label()), `自定义词池必须生效，实际 "${custom.label()}"`)
 custom.fire('click')
 assert.ok(['Alpha thing...', 'Beta thing...'].includes(custom.label()), `自定义词池的英文侧必须对应，实际 "${custom.label()}"`)
-ok(`自定义词池生效：${custom.label()}`)
+assert.ok(custom.title.includes('注脚'), `词条第三项必须作为 hover 注解出现在 title 里，实际 "${custom.title}"`)
+ok(`自定义词池生效（含 hover 注解）：${custom.label()}`)
 delete store['dsh-spinner-words:custom']
 
 console.log('词池解析')
