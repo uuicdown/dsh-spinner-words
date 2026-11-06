@@ -93,4 +93,4 @@ DSH 的运行状态行有两处承载文案：底层是**文本节点**，高光
 
 ## License
 
-MIT © 2026 Soren
+MIT © 2026 Soren (uuicdown)
