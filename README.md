@@ -73,7 +73,7 @@ pwsh install.ps1            # 或 powershell -ExecutionPolicy Bypass -File insta
 
 | DSH 变更 | 后果 |
 | --- | --- |
-| 改掉内置文案 `Deep diving...` | 插件自动 no-op，不报错不崩 |
+| 改掉内置文案 `Deep diving...` 与 `Deep diving…`（两种写法都认） | 插件自动 no-op，不报错不崩 |
 | 改掉 `data-chat-flow-kind` | 退化为「回合开场换词、回合内不轮换」，界面不坏 |
 
 ## 自定义
@@ -100,6 +100,7 @@ node verify.mjs
 4. 轮换与节流（31 次无连续重复；<3s 事件不换词）
 5. 防写入风暴（文案未变时维护扫描零写入）
 6. 隔离（别的 `role="status"` 元素不被改写）
+7. 锚点写法兼容（`Deep diving...` 与 `Deep diving…` 都认领；`Loading assets...` 这类近似文本不误伤）
 
 ## 发布
 

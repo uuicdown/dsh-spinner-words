@@ -52,8 +52,15 @@ window.__ModuleLoader__.load({
 		var exports = module.exports;
 		Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 
-		// ---- 内置文案锚点（改文案 = 自动停用，见文件头） ----
-		var BUILTIN = "Deep diving...";
+		// ---- 内置文案锚点：三个点（"..."）与单个省略号字符（U+2026）两种写法
+		//      都收。只认一种的话，DSH 换个写法插件就静默 no-op，用户还看不出来。
+		//      两种都改掉 = 自动停用（见文件头）。 ----
+		var ANCHORS = ["Deep diving...", "Deep diving…"];
+		var BUILTIN = ANCHORS[0];
+		function isAnchor(text) {
+			for (var a = 0; a < ANCHORS.length; a++) if (ANCHORS[a] === text) return true;
+			return false;
+		}
 
 		// ---- 保底节流：两次短语切换（含开场认领）的最小间隔 ----
 		var MIN_SWITCH_MS = 3000;
@@ -518,12 +525,12 @@ window.__ModuleLoader__.load({
 				if (!first || first.nodeType !== 3) continue;
 				if (tracked.has(el)) {
 					// 兜底：React 若回写了内置文案，恢复当前短语。
-					// current !== BUILTIN 是第二道闸：setText 已同值不写，
+					// isAnchor(current) 是第二道闸：setText 已同值不写，
 					// 这里显式排除，防未来重构绕过守卫复活风暴。
-					if (first.data === BUILTIN && current !== null && current !== BUILTIN) setText(el, current);
+					if (isAnchor(first.data) && current !== null && !isAnchor(current)) setText(el, current);
 					continue;
 				}
-				if (first.data !== BUILTIN) continue; // 不是思考状态行，不碰
+				if (!isAnchor(first.data)) continue; // 不是思考状态行，不碰
 				tracked.add(el);
 				attachToggle(el);
 				// 此前已无活动状态行 = 新回合开场：从袋里取新的一条；

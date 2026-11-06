@@ -32,7 +32,7 @@ console.log('静态契约')
 assert.ok(src.includes('window.__ModuleLoader__.load({'), 'bundle 必须用 __ModuleLoader__.load 包裹')
 assert.ok(src.includes(`id: "${pkg.name}"`), `模块 id 必须等于包名 ${pkg.name}`)
 assert.ok(!/\brequire\s*\(/.test(src.split('factory: (require) =>')[1] || ''), 'factory 内不得真的调用 require')
-assert.ok(src.includes('var BUILTIN = "Deep diving...";'), '内置文案锚点必须存在')
+assert.ok(src.includes('var ANCHORS = ["Deep diving...", "Deep diving…"];'), '三个点与省略号两种锚点写法都必须存在')
 assert.ok(src.includes('first.data === label'), 'setText 同值不写守卫必须存在')
 assert.ok(src.includes('lang = "zh"'), '默认语言必须是中文')
 assert.ok(pkg.dsh?.bundle?.patch, 'package.json 必须声明 dsh.bundle.patch')
@@ -214,5 +214,24 @@ observerCb([{ addedNodes: [other] }])
 await micro()
 assert.strictEqual(other.firstChild.data, otherBefore, '不认识的 role=status 元素不得被改写')
 ok('别的 role=status 元素不受影响')
+
+// ---------------------------------------------------------------- 锚点写法兼容
+console.log('锚点写法兼容')
+// 内置文案可能写成三个点，也可能写成单个省略号字符（U+2026）；
+// 只认一种的话，DSH 换写法时插件会静默 no-op，且用户看不出来。
+const ellipsis = el({ text: 'Deep diving…' })
+statusEls = [ellipsis]
+observerCb([{ addedNodes: [ellipsis] }])
+await micro()
+assert.match(ellipsis.firstChild.data, /…$/, `省略号形式的锚点也必须被认领，实际 "${ellipsis.firstChild.data}"`)
+assert.notStrictEqual(ellipsis.firstChild.data, 'Deep diving…', '省略号形式必须被改写，而不是原样留着')
+ok('"Deep diving…"（U+2026）形式也被认领')
+
+const unrelated = el({ text: 'Loading assets...' })
+statusEls = [unrelated]
+observerCb([{ addedNodes: [unrelated] }])
+await micro()
+assert.strictEqual(unrelated.firstChild.data, 'Loading assets...', '长得像但不是锚点的状态文本不得被改写')
+ok('近似文本不被误认领')
 
 console.log(`\n全部通过：${passed} 项检查`)
