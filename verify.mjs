@@ -373,6 +373,20 @@ assert.match(next.label(), /…$/, '新回合必须重新认领')
 assert.notStrictEqual(next.label(), turnLabel, '新回合应抽到不同的一条')
 ok(`新回合换词：${turnLabel} → ${next.label()}`)
 
+// 上一回合的行以 holding（占位）形式留在 DOM 里时，新回合仍必须换词
+const prev = host('深度求索中')
+hosts = [prev]
+observerCb([{ addedNodes: [prev] }])
+await micro()
+const prevLabel = prev.label()
+prev.hasAttribute = (name) => name === 'data-chat-running' || name === 'data-holding'
+const fresh = host('深度求索中')
+hosts = [prev, fresh]
+observerCb([{ addedNodes: [fresh] }])
+await micro()
+assert.notStrictEqual(fresh.label(), prevLabel, '上一回合的 holding 行不能让新回合沿用旧词')
+ok(`holding 占位仍在时，新回合照样换词：${prevLabel} → ${fresh.label()}`)
+
 assert.ok(src.includes('var ROTATE_MS = 0;'), '默认必须是「一回合一个词」（ROTATE_MS = 0）')
 ok('默认 ROTATE_MS = 0（想慢速轮换可自行改成毫秒数）')
 

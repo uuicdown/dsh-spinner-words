@@ -51,6 +51,7 @@ npm publish --access public
 4. **动画要挂可见层**：`.runningWhaleAnimated`（PNG 遮罩）平时可见，`runningWhaleStill`（SVG）只在减动效时露出。
 5. **别给已在动的东西叠动效**：内置鲸鱼自带游动，再叠 transform 会变成抽搐。
 6. **改文案的锚点要取证**：从安装包 grep 出真实字面量（`chat.deepDiving` =「深度求索中」/「Deep diving」），别照抄别人的插件。
+8. **holding 占位行会让新回合"卡住不动"**：上一回合结束后，状态行会以 `data-holding` 留在 DOM 里。判断"是否已有活动状态行"时必须跳过 holding 行，否则新回合会误判为同一回合、沿用旧词。
 7. **批量改源码的脚本要防静默**：CRLF 会让行首正则全部不匹配（脚本仍退出 0）；含引号的文案要 `JSON.stringify` 转义；跑完立刻 `node --check`。
 
 ## 本地安装（开发态）

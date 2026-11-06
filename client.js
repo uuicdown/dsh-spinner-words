@@ -754,6 +754,9 @@ window.__ModuleLoader__.load({
 			var list = hostList();
 			var hadTracked = false;
 			for (var i = 0; i < list.length; i++) {
+				// holding（上一回合结束后的占位行）不算"活动状态行"，
+				// 否则新回合会误判为同一回合、沿用旧词（表现为卡住不动）。
+				if (list[i].hasAttribute && list[i].hasAttribute("data-holding")) continue;
 				if (tracked.has(list[i])) { hadTracked = true; break; }
 			}
 			for (var j = 0; j < list.length; j++) {
