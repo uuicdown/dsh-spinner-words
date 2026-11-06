@@ -38,7 +38,7 @@
 | 23 | 正在焯水… | Blanching... |  |
 | 24 | 正在蹦迪… | Boogieing... |  |
 | 25 | 正在瞎忙活… | Doing busywork... |  |
-| 26 | 正在自举… | Bootstrapping... |  |
+| 26 | 自举中… | Bootstrapping... |  |
 | 27 | 正在酿造… | Brewing... |  |
 | 28 | 正在打洞… | Burrowing... |  |
 | 29 | 正在算账… | Calculating... |  |
@@ -99,21 +99,21 @@
 | 84 | 正在踩点… | Grooving... |  |
 | 85 | 正在刮阵风… | Gusting... |  |
 | 86 | 正在和声… | Harmonizing... |  |
-| 87 | 正在哈希… | Hashing... |  |
+| 87 | 哈希中… | Hashing... |  |
 | 88 | 正在孵化… | Hatching... |  |
 | 89 | 正在放牧… | Herding... |  |
 | 90 | 正在鸣笛… | Honking... |  |
-| 91 | 正在跃迁… | Jumping to hyperspace... |  |
+| 91 | 跃迁中… | Jumping to hyperspace... |  |
 | 92 | 正在头脑风暴… | Brainstorming... |  |
 | 93 | 正在想象… | Imagining... |  |
 | 94 | 正在即兴… | Improvising... |  |
 | 95 | 正在酝酿… | Incubating... |  |
 | 96 | 正在推演… | Inferring... |  |
 | 97 | 正在注入… | Infusing... |  |
-| 98 | 正在电离… | Ionizing... |  |
+| 98 | 电离中… | Ionizing... |  |
 | 99 | 正在悬浮… | Levitating... |  |
 | 100 | 正在磨洋工… | Lollygagging... |  |
-| 101 | 正在显化… | Manifesting... |  |
+| 101 | 显化中… | Manifesting... |  |
 | 102 | 正在腌制… | Marinating... |  |
 | 103 | 正在蜿蜒… | Meandering... |  |
 | 104 | 正在蜕变… | Metamorphosing... |  |
@@ -125,7 +125,7 @@
 | 110 | 正在出神… | Musing... |  |
 | 111 | 正在筑巢… | Nesting... |  |
 | 112 | 正在瞎鼓捣… | Noodling... |  |
-| 113 | 正在起头… | Nucleating... |  |
+| 113 | 成核中… | Nucleating... |  |
 | 114 | 正在绕飞… | Orbiting... |  |
 | 115 | 正在编排… | Orchestrating... |  |
 | 116 | 正在渗透… | Seeping... |  |
