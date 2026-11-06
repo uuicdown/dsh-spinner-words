@@ -5,6 +5,24 @@
 > npm 上最早可安装的版本是 **0.7.4**；0.1.0–0.7.3 只存在于 git 历史，未发布到 registry。
 > 加过 tag 的版本：[`v0.7.2`](../../releases/tag/v0.7.2)、[`v0.7.3`](../../releases/tag/v0.7.3)、[`v0.8.0`](../../releases/tag/v0.8.0)。
 
+## [0.8.2] — 2026-11-06
+
+### Added
+
+- `docs/demo.gif`：演示动图（420×281、10fps、9 秒、456 KB），显示连续两个回合抽到不同短语
+
+### Changed
+
+- README 按 humanizer-zh 重写：合并重复图注，删掉静态截图里看不出来的点击说明
+
+## [0.8.1] — 2026-11-06
+
+### Changed
+
+- npm keywords 扩到 13 个，补 `status-line`、`thinking-words`、`spinner-verbs`、`bilingual`、`chinese`、`word-pool`
+- README 章节重排，安装提到最前
+- 新增 `docs/launch-post.md`：发布帖正文、标题候选、GIF 录制方案、渠道与禁忌
+
 ## [0.8.0] — 2026-11-06
 
 ### Fixed
