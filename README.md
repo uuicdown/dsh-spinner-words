@@ -36,7 +36,15 @@ Chipping through the wall...  ← 同一条短语换语言，不重新抽取
 
 ## 安装
 
-### 自动（推荐）
+### 一条命令（发布后）
+
+```bash
+dsh plugin --profile desktop add dsh-spinner-words
+# 或者直接从 GitHub 装：
+dsh plugin --profile desktop add git+https://github.com/uuicdown/dsh-spinner-words.git
+```
+
+### 自动（本地目录，推荐用于开发）
 
 ```powershell
 pwsh install.ps1            # 或 powershell -ExecutionPolicy Bypass -File install.ps1
