@@ -7,13 +7,13 @@
 
 纯前端插件，不改 DSH 源码，不占用渲染插槽。
 
-<img src="docs/status.png" width="354" alt="真实截图：DSH 运行中的状态行显示「正在体会上善若水…」">
+<img src="docs/status.png" width="354" alt="DSH 运行中的状态行显示「正在体会上善若水…」">
 
-*截图来自运行中的 DSH，点一下状态行会切到同一条短语的英文。*
+运行中的状态行。
 
 <img src="docs/demo.gif" width="420" alt="演示：连续两个回合分别抽到「原地转圈中…」和「正在撒欢…」">
 
-*动图：连续两个回合分别抽到「原地转圈中…」和「正在撒欢…」，中间几帧是上一轮结束。*
+连续两个回合抽到不同的词，中间几帧是上一轮结束。
 
 ## 安装
 
@@ -35,9 +35,9 @@ dsh plugin --profile desktop add git+https://github.com/uuicdown/dsh-spinner-wor
 
 ## 它做什么
 
-- 一回合一个词：每次请求开场从词池里随机抽一条，整个回合不变，和 Claude Code 一致。正在想的时候不会被换词打断。
+- 一回合一个词：每轮请求开场抽一条，整轮不变，和 Claude Code 一样，思考期间不会反复换词。
 - 中英双语一一对应：点击状态行切换语言，换的是同一条短语，不会重新抽取；选择记在 `localStorage`，重载后恢复。
-- 注脚不占状态行：29 条典故类词带完整英文注脚（如「凿壁偷光」→ boring a hole in the wall to steal a neighbor's lamplight），只在鼠标悬停时显示。
+- 注脚不占状态行：29 条典故词带完整英文注脚（如「凿壁偷光」→ boring a hole in the wall to steal a neighbor's lamplight），只在悬停时显示。
 - 词池可以自己改：双击状态行或按 `Alt+E` 打开编辑器，一行一条增删改，下个回合生效。
 
 ## 词池构成（287 条）
@@ -49,7 +49,7 @@ dsh plugin --profile desktop add git+https://github.com/uuicdown/dsh-spinner-wor
 | 中国本土 · 雅 | 86 | `凿壁偷光中` / `庖丁解牛中` / `一蓑烟雨中` / `正在望月` |
 | 中国本土 · 俗 | 30 | `带薪思考中` / `憋大招中` / `已读乱回中` |
 
-完整清单见 [`REVIEW.md`](REVIEW.md)。它由 `make-review.mjs` 从 `client.js` 的词池直接生成，和代码逐字一致。
+完整清单见 [`REVIEW.md`](REVIEW.md)，由 `make-review.mjs` 从 `client.js` 的词池直接生成，和代码逐字一致。
 
 ## 操作
 
