@@ -86,7 +86,13 @@ window.__ModuleLoader__.load({
 			return DURATION_RE.test(text);
 		}
 
-		// ---- 保底节流：两次短语切换（含开场认领）的最小间隔 ----
+		// ---- 轮换节奏：默认「一回合一个词」（与 Claude Code 一致）----
+		// Claude Code 每次请求随机抽一条 spinner verb，整个回合保持不变；
+		// 「长任务定期换词」在它那儿仍是一个 feature request（anthropics/claude-code#83521）。
+		// 想改成慢速轮换就设成毫秒数，例如 20000 = 每 20 秒换一条；0 = 回合内不换。
+		var ROTATE_MS = 0;
+
+		// ---- 仅在 ROTATE_MS > 0 时才生效的保底间隔 ----
 		var MIN_SWITCH_MS = 3000;
 
 		// ---- 维护扫描节奏：认领兜底 / React 回写修复（不推进短语） ----
@@ -574,8 +580,10 @@ window.__ModuleLoader__.load({
 			for (var j = 0; j < live.length; j++) setText(live[j], current);
 		}
 
-		/** 轮换事件入口：窗口外立即切换；窗口内记 pending，到点补切。 */
+		/** 轮换事件入口：默认 ROTATE_MS = 0，回合内一律不换词（一回合一个词）。
+		 *  只有把 ROTATE_MS 设成毫秒数时才按节流换。 */
 		function onActivity() {
+			if (ROTATE_MS <= 0) { pending = false; return; }
 			if (liveStatuses().length === 0) { pending = false; return; } // 回合未运行
 			var elapsed = Date.now() - lastSwitchAt;
 			if (elapsed >= MIN_SWITCH_MS) { switchNow(); return; }
@@ -721,6 +729,12 @@ window.__ModuleLoader__.load({
 		 *  （后台标签页定时器被节流时兜住窗口边界的补切）。不推进短语。 */
 		function maintain() {
 			sweep();
+			// 慢速轮换（仅在 ROTATE_MS > 0 时启用）：按时间而不是按事件换词
+			if (ROTATE_MS > 0 && current !== null && liveStatuses().length > 0 &&
+				Date.now() - lastSwitchAt >= ROTATE_MS) {
+				switchNow();
+				return;
+			}
 			if (pending && Date.now() - lastSwitchAt >= MIN_SWITCH_MS) switchNow();
 		}
 

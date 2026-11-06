@@ -29,8 +29,7 @@ Chipping through the wall...  ← 同一条短语换语言，不重新抽取
 ## 行为细节
 
 - **洗牌袋抽取**：一袋 288 个索引抽完才重洗，袋内不重复，袋与袋交界也不连出同一条。
-- **事件驱动轮换**：对话区新挂载 `assistant-step` / `tool-call` / `model-retry` 行时换下一条。流式 token 不挂新行，不会误触发；纯思考（无新行）时短语保持不变，不刷屏。
-- **3 秒保底节流**：两次切换最短间隔 3 秒，窗口内到达的多个事件合并为窗口边界的一次补切（连发工具调用只换一次词）。
+- **一回合一个词**（对齐 Claude Code）：每次请求开场从袋里随机抽一条，整个回合保持不动。Claude Code 的「长任务定期换词」至今仍是一条 feature request（[anthropics/claude-code#83521](https://github.com/anthropics/claude-code/issues/83521)），不是默认行为。想慢速轮换就把 `ROTATE_MS` 设成毫秒数，例如 `20000` = 每 20 秒换一条（0 = 回合内不换）。
 - **多会话并排**：同一时刻所有活动状态行显示同一条，切换同步。
 - **双语切换**：点击状态行中英互切，同一条短语只换语言、不重新抽取；选择写入 `localStorage`（`dsh-spinner-words:lang`），重载后恢复。默认**中文**。
 - **计时器不受影响**：右侧 `N分N秒` 是兄弟 `<span>`。
@@ -83,7 +82,8 @@ pwsh install.ps1            # 或 powershell -ExecutionPolicy Bypass -File insta
 `client.js` 顶部是全部可调项：
 
 - `PAIRS`：`[英文, 中文]` 成对数组。英文存小写（展示时自动首字母大写 + `...`），中文不要自带省略号（展示时自动加 `…`）；两列索引一一对应。
-- `MIN_SWITCH_MS`：默认 `3000`，纯下限而非节拍。
+- `ROTATE_MS`：换词节奏。`0`（默认）= 一回合一个词；`20000` = 回合内每 20 秒换一条。
+- `MIN_SWITCH_MS`：默认 `3000`，仅在 `ROTATE_MS > 0` 时生效的保底间隔。
 - 默认语言：`var lang = "zh"`。
 
 改完重启 DSH 生效。

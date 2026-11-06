@@ -234,27 +234,18 @@ status.fire('click')
 assert.strictEqual(status.label(), zhLabel, '再点一次应回到同一条中文短语')
 ok('再点一次回到同一条中文短语（不重新抽取）')
 
-// ---------------------------------------------------------------- 轮换与节流
-console.log('轮换与节流')
-const labels = [status.label()]
-for (let i = 0; i < 30; i++) {
-  clock += 3100
+// ---------------------------------------------------------------- 节奏（一回合一个词）
+console.log('轮换节奏')
+const turnLabel = status.label()
+for (let i = 0; i < 20; i++) {
+  clock += 5000
   observerCb([{ addedNodes: [row('assistant-step')] }])
   await micro()
-  labels.push(status.label())
+  observerCb([{ addedNodes: [row('tool-call')] }])
+  await micro()
 }
-for (let i = 1; i < labels.length; i++) {
-  assert.notStrictEqual(labels[i], labels[i - 1], `连续两条不能相同：${labels[i - 1]}`)
-}
-assert.ok(new Set(labels).size > 20, `31 次轮换应出现足够多样的短语，实际 ${new Set(labels).size} 种`)
-ok(`31 次轮换无连续重复，共 ${new Set(labels).size} 种`)
-
-const before = status.label()
-clock += 500
-observerCb([{ addedNodes: [row('tool-call')] }])
-await micro()
-assert.strictEqual(status.label(), before, '窗口内（<3s）的事件不得立刻换词')
-ok('3 秒保底节流生效')
+assert.strictEqual(status.label(), turnLabel, '默认节奏「一回合一个词」：回合内 20 次事件都不换词（对齐 Claude Code）')
+ok('回合内 20 次思考/工具事件都不换词')
 
 // ---------------------------------------------------------------- 防写入风暴
 console.log('防写入风暴')
@@ -321,5 +312,20 @@ observerCb([{ addedNodes: [holdingHost] }])
 await micro()
 assert.strictEqual(holdingHost.label(), '深度求索中', 'holding（已结束/隐藏）行不该被认领')
 ok('holding 行不被认领')
+
+console.log('新回合')
+hosts = []                                  // 上一回合的状态行卸载
+observerCb([{ addedNodes: [] }])
+await micro()
+const next = host('深度求索中')             // 新回合挂载一行内置文案
+hosts = [next]
+observerCb([{ addedNodes: [next] }])
+await micro()
+assert.match(next.label(), /…$/, '新回合必须重新认领')
+assert.notStrictEqual(next.label(), turnLabel, '新回合应抽到不同的一条')
+ok(`新回合换词：${turnLabel} → ${next.label()}`)
+
+assert.ok(src.includes('var ROTATE_MS = 0;'), '默认必须是「一回合一个词」（ROTATE_MS = 0）')
+ok('默认 ROTATE_MS = 0（想慢速轮换可自行改成毫秒数）')
 
 console.log(`\n全部通过：${passed} 项检查`)
