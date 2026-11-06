@@ -447,6 +447,7 @@ window.__ModuleLoader__.load({
 		// pending：窗口内到达、等待窗口边界补切的轮换事件。
 		var tracked = new WeakSet();
 		var seenRows = new WeakSet();
+		var ownedText = new WeakSet();
 		var claimedOnce = false;
 		var current = null;
 		var lastSwitchAt = 0;
@@ -459,6 +460,35 @@ window.__ModuleLoader__.load({
 
 		function shimmerOf(host) {
 			return host.querySelector("[data-shimmer-text]");
+		}
+
+		/** 状态行里所有承载文案的文本节点。
+		 *  TextShimmer 底层（Provider=false）把文案渲染成**文本节点**，
+		 *  高光层（Provider=true）才用 data-shimmer-text 属性——两处都要写。 */
+		function textTargets(host) {
+			var els = host.querySelectorAll("*");
+			var out = [];
+			for (var i = 0; i < els.length; i++) {
+				var kids = els[i].childNodes;
+				if (!kids) continue;
+				for (var k = 0; k < kids.length; k++) {
+					if (kids[k].nodeType === 3 && kids[k].data) out.push(kids[k]);
+				}
+			}
+			return out;
+		}
+
+		/** 这一行当前是否还显示着内置文案（属性或文本节点任一处）。 */
+		function anyAnchor(host) {
+			var pixels = host.querySelectorAll("[data-shimmer-text]");
+			for (var i = 0; i < pixels.length; i++) {
+				if (isAnchor(pixels[i].getAttribute("data-shimmer-text"))) return true;
+			}
+			var texts = textTargets(host);
+			for (var j = 0; j < texts.length; j++) {
+				if (isAnchor(texts[j].data)) return true;
+			}
+			return false;
 		}
 
 		function liveStatuses() {
@@ -483,6 +513,17 @@ window.__ModuleLoader__.load({
 			for (var p = 0; p < pixels.length; p++) {
 				if (pixels[p].getAttribute("data-shimmer-text") !== label) {
 					pixels[p].setAttribute("data-shimmer-text", label);
+					changed = true;
+				}
+			}
+			var texts = textTargets(host);
+			for (var t = 0; t < texts.length; t++) {
+				var node = texts[t];
+				// 只碰持有内置文案的节点，或我们自己之前写过、需要跟着轮换的节点
+				if (!isAnchor(node.data) && !ownedText.has(node)) continue;
+				if (node.data !== label) {
+					ownedText.add(node);
+					node.data = label;
 					changed = true;
 				}
 			}
@@ -566,17 +607,14 @@ window.__ModuleLoader__.load({
 				// holding = 本轮已结束、元素留着占位（带 data-holding 且 aria-hidden），
 				// 不是"正在思考"，不认领也不进袋。
 				if (host.hasAttribute && host.hasAttribute("data-holding")) continue;
-				var pixel = shimmerOf(host);
-				if (!pixel) continue;
-				var text = pixel.getAttribute("data-shimmer-text");
+				if (!shimmerOf(host)) continue;
+				var anchored = anyAnchor(host);
 				if (tracked.has(host)) {
-					// 兜底：React 若回写了内置文案，恢复当前短语。
-					// isAnchor(current) 是第二道闸：setText 已同值不写，
-					// 这里显式排除，防未来重构绕过守卫复活风暴。
-					if (isAnchor(text) && current !== null && !isAnchor(current)) setText(host, current);
+					// 兜底：React 若把内置文案写回来了（属性或文本节点任一），恢复当前短语。
+					if (anchored && current !== null && !isAnchor(current)) setText(host, current);
 					continue;
 				}
-				if (!isAnchor(text)) continue; // 不是思考状态行，不碰
+				if (!anchored) continue; // 不是思考状态行，不碰
 				tracked.add(host);
 				attachToggle(host);
 				if (!claimedOnce) {

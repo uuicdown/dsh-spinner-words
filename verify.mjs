@@ -103,39 +103,60 @@ function textNode(data) {
   }
 }
 
-/** 一个运行状态行容器：<div data-chat-running> … [data-shimmer-text]×2 … [role=status] … </div>
- *  注意 TextShimmer 会渲染两个同属性节点：可见文字层 + 高光扫过层（.sweep/.decoration），
- *  只改一个会与另一个叠字。 */
+/** 一个运行状态行容器，按 TextShimmer 的真实结构搭：
+ *   div[data-chat-running]
+ *     span[role=status].visuallyHidden > 文本节点
+ *     span.runningContent > span.root[data-shimmer]
+ *        span.content > span.text > 【文本节点】      ← Provider=false：底层文字是文本节点
+ *        span.decoration > span.sweep > span.content.highlight
+ *                                      > span.text[data-shimmer-text] ← Provider=true：属性渲染
+ *   同一句话两处载体：底层文本节点 + 高光层属性。只改一层就会叠字。 */
 function host(text) {
-  function shimmerNode() {
-    return {
-      nodeType: 1,
-      attrs: { 'data-shimmer-text': text },
-      writes: 0,
-      getAttribute(name) { return name in this.attrs ? this.attrs[name] : null },
-      setAttribute(name, value) { this.attrs[name] = value; this.writes++ }
-    }
+  const baseText = textNode(text)
+  const a11yText = textNode(text)
+  const highlight = {
+    nodeType: 1,
+    attrs: { 'data-shimmer-text': text },
+    writes: 0,
+    getAttribute(name) { return name in this.attrs ? this.attrs[name] : null },
+    setAttribute(name, value) { this.attrs[name] = value; this.writes++ }
   }
-  const shimmer = shimmerNode()
-  const sweep = shimmerNode()
-  const a11y = { nodeType: 1, firstChild: textNode(text) }
+  const textSpan = { nodeType: 1, childNodes: [baseText] }
+  const content = { nodeType: 1, childNodes: [textSpan] }
+  const root = { nodeType: 1, childNodes: [content] }
+  const runningContent = { nodeType: 1, childNodes: [root] }
+  const a11y = { nodeType: 1, childNodes: [a11yText] }
+  const highlightSpan = { nodeType: 1, childNodes: [highlight] }
+  const sweep = { nodeType: 1, childNodes: [highlightSpan] }
+  const decoration = { nodeType: 1, childNodes: [sweep] }
+  const elements = [a11y, runningContent, root, content, textSpan, decoration, sweep, highlightSpan, highlight]
   const listeners = {}
   return {
     nodeType: 1,
     style: {},
     title: '',
+    childNodes: [a11y, runningContent, decoration],
     getAttribute: (name) => (name === 'data-chat-running' ? '' : null),
     hasAttribute: (name) => name === 'data-chat-running',
-    querySelector: (sel) => (sel === '[data-shimmer-text]' ? shimmer : sel === '[role="status"]' ? a11y : null),
-    querySelectorAll: (sel) => (sel === '[data-shimmer-text]' ? [shimmer, sweep] : []),
+    querySelector: (sel) => (sel === '[data-shimmer-text]' ? highlight : sel === '[role="status"]' ? a11y : null),
+    querySelectorAll: (sel) => {
+      if (sel === '[data-shimmer-text]') return [highlight]
+      if (sel === '*') return elements
+      return []
+    },
     addEventListener(type, fn) { (listeners[type] ||= []).push(fn) },
     fire(type) { (listeners[type] || []).forEach((fn) => fn()) },
-    _shimmer: shimmer,
-    _sweep: sweep,
+    _shimmer: highlight,
+    _base: baseText,
     _a11y: a11y,
-    label() { return shimmer.attrs['data-shimmer-text'] },
-    sweepLabel() { return sweep.attrs['data-shimmer-text'] },
-    relabel(v) { shimmer.attrs['data-shimmer-text'] = v; sweep.attrs['data-shimmer-text'] = v }
+    label() { return baseText.data },
+    highlightLabel() { return highlight.attrs['data-shimmer-text'] },
+    a11yLabel() { return a11yText.data },
+    relabel(v) {
+      baseText.data = v
+      highlight.attrs['data-shimmer-text'] = v
+      a11yText.data = v
+    }
   }
 }
 
@@ -195,12 +216,12 @@ await micro()
 
 assert.match(status.label(), /…$/, `默认必须显示中文短语，实际 "${status.label()}"`)
 assert.notStrictEqual(status.label(), '深度求索中', '必须已被插件认领（属性被改写）')
-assert.strictEqual(status._a11y.firstChild.data, status.label(), '读屏用的 role=status 文本必须同步')
+assert.strictEqual(status.a11yLabel(), status.label(), '读屏用的 role=status 文本必须同步')
 assert.strictEqual(status.title, '点击切换为 English', '认领后应挂上可点击提示')
 assert.strictEqual(status.style.cursor, 'pointer', '认领后应可点击')
 const zhLabel = status.label()
-assert.strictEqual(status.sweepLabel(), zhLabel, '高光扫过层（sweep）必须同步改写，否则两层文字叠在一起')
-ok(`认领成功，两层属性都改写：${zhLabel}`)
+assert.strictEqual(status.highlightLabel(), zhLabel, '高光层的 data-shimmer-text 属性必须同步')
+ok(`认领成功，底层文本 + 高光属性 两处一致：${zhLabel}`)
 
 status.fire('click')
 assert.match(status.label(), /^[A-Z].*\.\.\.$/, `点击后应显示英文短语，实际 "${status.label()}"`)
@@ -236,12 +257,14 @@ ok('3 秒保底节流生效')
 // ---------------------------------------------------------------- 防写入风暴
 console.log('防写入风暴')
 status._shimmer.writes = 0
-status._a11y.firstChild.setWrites(0)
+status._base.setWrites(0)
+status._a11y.childNodes[0].setWrites(0)
 maintainFn()
 maintainFn()
 maintainFn()
 assert.strictEqual(status._shimmer.writes, 0, `文案未变时维护扫描不得写属性，实际写了 ${status._shimmer.writes} 次`)
-assert.strictEqual(status._a11y.firstChild.writes, 0, '文案未变时不得重写读屏文本节点')
+assert.strictEqual(status._base.writes, 0, '文案未变时不得重写底层文本节点')
+assert.strictEqual(status._a11y.childNodes[0].writes, 0, '文案未变时不得重写读屏文本节点')
 ok('维护扫描在文案未变时零写入（同值不写守卫生效）')
 
 // ---------------------------------------------------------------- 锚点兼容

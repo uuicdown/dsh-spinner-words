@@ -65,6 +65,7 @@ pwsh install.ps1            # 或 powershell -ExecutionPolicy Bypass -File insta
 ## 工作原理（为什么不用改源码）
 
 - **可见文案是属性，不是文本节点**。DSH 的 `RunningStatus` 渲染成 `<div data-chat-running>`，可见文字放在 `<span data-shimmer-text="深度求索中">` 上，由 CSS `::after { content: attr(data-shimmer-text) }` 画出来；同一个 div 里的 `<span role="status" class="…visuallyHidden">` 只是给读屏的。所以插件改的是 **`data-shimmer-text` 属性**，并同步读屏节点——改文本节点永远看不见效果。
+- **同一句话有两个载体**。`TextShimmer` 为做高光扫描，把文案渲染两份：底层（`Provider=false`）是**文本节点**，高光层（`Provider=true`）才是 `data-shimmer-text` **属性**。只改一层会叠字（自定义短语与「深度求索中」重影）——插件对两处都写。
 - React 每秒重渲，值没变就不触碰 DOM；回合结束元素卸载、新回合挂载出新节点时，`MutationObserver`（只订阅 `childList`）捕获并认领。
 - 轮换事件来自 `data-chat-flow-kind` 标记（DSH 滚动锚定依赖它，属稳定实现细节）：新挂载且种类在触发集内的行 = 一次轮换事件，`WeakSet` 去重 React 移除重插入。
 - `MutationObserver` 只订阅 `childList`：不订阅 `characterData`，否则每个流式 token 都会触发全文档扫描。
