@@ -11,7 +11,7 @@
 
 运行中的状态行。
 
-<img src="https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/demo.gif?v=2" width="300" alt="演示：状态行在不同回合显示不同短语（举杯邀月中、正在旋转、正在收拢、正在乱窜）">
+<img src="https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/demo-status.gif" width="300" alt="演示：状态行在不同回合显示不同短语（举杯邀月中、正在旋转、正在收拢、正在乱窜）">
 
 ## 安装
 
