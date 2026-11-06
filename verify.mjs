@@ -50,8 +50,8 @@ assert.ok(src.includes('keydown'), '必须有键盘快捷键入口（不依赖�
 assert.ok(src.includes('__dshSpinnerWordsEditor'), '必须暴露控制台兜底入口 window.__dshSpinnerWordsEditor()')
 assert.ok(src.includes('characterData: true'), '必须订阅 characterData，否则 React 每秒回写文本时我们收不到通知（会闪回内置文案）')
 assert.ok(src.includes('"characterData"'), 'onMutate 里必须处理 characterData mutation')
-assert.ok(src.includes('[data-dsh-words-motion="swim"]{animation'), '动画必须挂在图标容器上（内层 SVG 平时 display:none，动它看不见）')
-assert.ok(src.includes('prefers-reduced-motion'), '必须尊重系统减动效设置')
+assert.ok(!src.includes('@keyframes dsw-'), '不应再注入任何自定义动画（用户要求全部关掉）')
+assert.ok(!src.includes('data-dsh-words-motion'), '不应再往吉祥物写动画属性')
 assert.ok(pkg.dsh?.client?.platform === 'web', 'package.json 必须声明 dsh.client.platform = web')
 assert.ok(pkg.exports?.['./client'], 'package.json 必须有 exports["./client"]')
 ok('bundle 包裹 / 模块 id / 锚点 / 属性改写 / 守卫 / 默认中文 / 清单声明')
@@ -260,7 +260,7 @@ assert.strictEqual(status.a11yLabel(), status.label(), '读屏用的 role=status
 assert.ok(status.title.includes('切换为 English') && status.title.includes('Alt'), '认领后应挂上"切换语言 + 编辑词池"提示')
 assert.strictEqual(status.style.cursor, 'pointer', '认领后应可点击')
 const zhLabel = status.label()
-assert.ok(status.icon(), '认领后必须给吉祥物分配一个语境动作（data-dsh-words-motion）')
+assert.ok(status.icon() === '', '不应再给吉祥物加自定义动作（用内置游动即可）')
 assert.strictEqual(status.highlightLabel(), zhLabel, '高光层的 data-shimmer-text 属性必须同步')
 ok(`认领成功，底层文本 + 高光属性 两处一致：${zhLabel}`)
 
@@ -377,7 +377,7 @@ assert.ok(src.includes('var ROTATE_MS = 0;'), '默认必须是「一回合一个
 ok('默认 ROTATE_MS = 0（想慢速轮换可自行改成毫秒数）')
 
 console.log('自定义词池')
-store['dsh-spinner-words:custom'] = JSON.stringify([['alpha thing', '甲中', '甲注脚', 'spin']])
+store['dsh-spinner-words:custom'] = JSON.stringify([['alpha thing', '甲中', '甲注脚']])
 hosts = []                                   // 结束上一回合
 observerCb([{ addedNodes: [] }])
 await micro()
@@ -389,8 +389,7 @@ assert.ok(['甲中…'].includes(custom.label()), `自定义词池必须生效�
 custom.fire('click')
 assert.ok(['Alpha thing...'].includes(custom.label()), `自定义词池的英文侧必须对应，实际 "${custom.label()}"`)
 assert.ok(custom.title.includes('注脚'), `词条第三项必须作为 hover 注解出现在 title 里，实际 "${custom.title}"`)
-assert.strictEqual(custom.icon(), 'spin', `词条第四项必须覆盖吉祥物动作，实际 "${custom.icon()}"`)
-ok(`自定义词池生效（含 hover 注解 + 指定动作）：${custom.label()} [${custom.icon()}]`)
+ok(`自定义词池生效（含 hover 注解）：${custom.label()}`)
 delete store['dsh-spinner-words:custom']
 
 console.log('词池解析')
@@ -401,14 +400,6 @@ assert.strictEqual(JSON.stringify(parsed[0]), JSON.stringify(['alpha', '甲']))
 assert.strictEqual(JSON.stringify(parsed[2]), JSON.stringify(['只有中文', '只有中文']), '只有一侧时两侧都用同一串')
 ok('parsePool：跳过注释空行、单侧兜底')
 
-console.log('语境动作')
-assert.strictEqual(bundle.motionFor('正在烘焙', 'Baking'), 'munch', '烘焙类应上下咀嚼式跳动')
-assert.strictEqual(bundle.motionFor('正在打洞', 'Burrowing'), 'dive', '打洞类应向下潜')
-assert.strictEqual(bundle.motionFor('正在旋转', 'Spinning'), 'spin', '旋转类应转圈')
-assert.strictEqual(bundle.motionFor('正在打盹', 'Napping'), 'doze', '打盹类应缓慢浮动')
-assert.strictEqual(bundle.motionFor('正在飞奔', 'Galloping'), 'dash', '奔跑类应左右急动')
-assert.strictEqual(bundle.motionFor('正在发光', 'Beaming'), 'glow', '发光类应明暗脉动')
-assert.strictEqual(bundle.motionFor('随便什么', 'Whatever'), 'swim', '没有匹配时回落到默认游动')
-ok('motionFor：烘焙/打洞/旋转/打盹/飞奔/发光 + 默认回落')
 
-console.log(`\n全部通过：${passed} 项检查`)
+console.log(`
+全部通过：${passed} 项检查`)
