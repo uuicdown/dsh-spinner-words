@@ -54,7 +54,7 @@ ok('bundle 包裹 / 模块 id / 锚点 / 属性改写 / 守卫 / 默认中文 / 
 
 // ---------------------------------------------------------------- 词池数据
 console.log('词池数据')
-const start = src.indexOf('var PAIRS = [')
+const start = src.indexOf('var BASE_PAIRS = [')
 const end = src.indexOf('\n\t\t];', start)
 assert.ok(start > 0 && end > start, 'PAIRS 数组必须存在')
 const arrayText = src.slice(src.indexOf('=', start) + 1, src.indexOf(';', start))
@@ -327,5 +327,28 @@ ok(`新回合换词：${turnLabel} → ${next.label()}`)
 
 assert.ok(src.includes('var ROTATE_MS = 0;'), '默认必须是「一回合一个词」（ROTATE_MS = 0）')
 ok('默认 ROTATE_MS = 0（想慢速轮换可自行改成毫秒数）')
+
+console.log('自定义词池')
+store['dsh-spinner-words:custom'] = JSON.stringify([['alpha thing', '甲中'], ['beta thing', '乙中']])
+hosts = []                                   // 结束上一回合
+observerCb([{ addedNodes: [] }])
+await micro()
+const custom = host('深度求索中')            // 新回合开场必须从自定义池里抽
+hosts = [custom]
+observerCb([{ addedNodes: [custom] }])
+await micro()
+assert.ok(['甲中…', '乙中…'].includes(custom.label()), `自定义词池必须生效，实际 "${custom.label()}"`)
+custom.fire('click')
+assert.ok(['Alpha thing...', 'Beta thing...'].includes(custom.label()), `自定义词池的英文侧必须对应，实际 "${custom.label()}"`)
+ok(`自定义词池生效：${custom.label()}`)
+delete store['dsh-spinner-words:custom']
+
+console.log('词池解析')
+const parsed = bundle.parsePool ? bundle.parsePool('# 注释\n\nalpha | 甲\nbeta | 乙\n只有中文\n') : null
+assert.ok(Array.isArray(parsed), 'bundle 必须导出 parsePool 供测试与编辑器复用')
+assert.strictEqual(parsed.length, 3, `应解析出 3 条（跳过注释与空行），实际 ${parsed.length}`)
+assert.strictEqual(JSON.stringify(parsed[0]), JSON.stringify(['alpha', '甲']))
+assert.strictEqual(JSON.stringify(parsed[2]), JSON.stringify(['只有中文', '只有中文']), '只有一侧时两侧都用同一串')
+ok('parsePool：跳过注释空行、单侧兜底')
 
 console.log(`\n全部通过：${passed} 项检查`)

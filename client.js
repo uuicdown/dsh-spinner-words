@@ -120,7 +120,7 @@ window.__ModuleLoader__.load({
 		// ---- 词池：[英文, 中文]，索引一一对应（点击切换语言时保留同一条）----
 		// 展示规则：英文首字母大写 + "..."；中文原样 + "…"（中文条目自带
 		// 「中」字进行体，与英文 -ing 对应）。
-		var PAIRS = [
+		var BASE_PAIRS = [
 			// ======== 1. 鲸鱼系 deep 短语（13 条，来自 dsh-deep-verbs）========
 			["deep diving", "深潜中"],
 			["deep seeking", "深度求索中"],
@@ -418,8 +418,59 @@ window.__ModuleLoader__.load({
 			["holding it in", "憋着不吭声中"]
 		];
 
+		// ---- 自定义词池 ----
+		// localStorage 里的自定义池覆盖内置池；编辑器在状态行上 Alt+点击打开，
+		// 一行一条「英文 | 中文」（# 开头为注释，只写一侧则两侧同用）。
+		var CUSTOM_KEY = "dsh-spinner-words:custom";
+		var activePairs = BASE_PAIRS;
+
+		function parsePool(text) {
+			var out = [];
+			var lines = String(text == null ? "" : text).split(/\r?\n/);
+			for (var i = 0; i < lines.length; i++) {
+				var line = lines[i].trim();
+				if (!line || line.charAt(0) === "#") continue;
+				var bar = line.indexOf("|");
+				var en = bar === -1 ? line : line.slice(0, bar).trim();
+				var zh = bar === -1 ? line : line.slice(bar + 1).trim();
+				if (!en && !zh) continue;
+				if (!en) en = zh;
+				if (!zh) zh = en;
+				out.push([en, zh]);
+			}
+			return out;
+		}
+
+		function poolPairs() {
+			try {
+				var raw = localStorage.getItem(CUSTOM_KEY);
+				if (raw) {
+					var parsed = JSON.parse(raw);
+					var clean = [];
+					if (Array.isArray(parsed)) {
+						for (var i = 0; i < parsed.length; i++) {
+							var p = parsed[i];
+							if (p && typeof p[1] === "string" && p[1]) clean.push([String(p[0] || p[1]), p[1]]);
+						}
+					}
+					if (clean.length > 0) return clean;
+				}
+			} catch (e) { /* 坏数据 → 回落内置池 */ }
+			return BASE_PAIRS;
+		}
+
+		var lastRaw = "\u0000";
+		function refreshPool() {
+			var raw = null;
+			try { raw = localStorage.getItem(CUSTOM_KEY); } catch (e) { raw = null; }
+			if (raw === lastRaw) return; // 没变就不动袋子，保住"一袋抽完才重洗"
+			lastRaw = raw;
+			activePairs = poolPairs();
+			bag = [];
+		}
+
 		function labelFor(idx) {
-			var pair = PAIRS[idx];
+			var pair = activePairs[idx] || BASE_PAIRS[0];
 			if (lang === "zh") return pair[1] + "…";
 			return pair[0].charAt(0).toUpperCase() + pair[0].slice(1) + "...";
 		}
@@ -430,7 +481,7 @@ window.__ModuleLoader__.load({
 		var lastIndex = -1;
 		function nextPhrase() {
 			if (bag.length === 0) {
-				bag = PAIRS.map(function (_, i) { return i; });
+				bag = activePairs.map(function (_, i) { return i; });
 				for (var i = bag.length - 1; i > 0; i--) {
 					var j = Math.floor(Math.random() * (i + 1));
 					var t = bag[i]; bag[i] = bag[j]; bag[j] = t;
@@ -548,7 +599,9 @@ window.__ModuleLoader__.load({
 		function toggleHint() {
 			return lang === "zh" ? "点击切换为 English" : "点击切换为中文";
 		}
-		function onToggle() {
+		function onToggle(e) {
+			// Alt / Cmd + 点击 = 打开词池编辑器（加减词、改映射）
+			if (e && (e.altKey || e.metaKey)) { openEditor(); return; }
 			lang = lang === "zh" ? "en" : "zh";
 			try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* noop */ }
 			if (current === null || lastIndex < 0) return;
@@ -561,6 +614,68 @@ window.__ModuleLoader__.load({
 				live[j].title = toggleHint();
 			}
 		}
+		// ---- 词池编辑器（Alt+点击状态行，或控制台 window.__dshSpinnerWordsEditor()）----
+		var editorEl = null;
+
+		function closeEditor() {
+			if (editorEl && editorEl.parentNode) editorEl.parentNode.removeChild(editorEl);
+			editorEl = null;
+		}
+
+		function openEditor() {
+			if (editorEl) { closeEditor(); return; }
+			var wrap = document.createElement("div");
+			wrap.setAttribute("data-dsh-spinner-words-editor", "");
+			wrap.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:2147483000;width:min(440px,90vw);" +
+				"background:#1b1b1f;color:#eee;border:1px solid #3a3a42;border-radius:10px;" +
+				"box-shadow:0 8px 30px rgba(0,0,0,.45);font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;padding:10px;";
+
+			var title = document.createElement("div");
+			title.textContent = "dsh-spinner-words · 词池编辑器（一行一条：英文 | 中文，# 开头是注释）";
+			title.style.cssText = "margin-bottom:6px;color:#8cd0ff;";
+
+			var ta = document.createElement("textarea");
+			ta.value = activePairs.map(function (p) { return p[0] + " | " + p[1]; }).join("\n");
+			ta.style.cssText = "width:100%;height:240px;background:#111;color:#ddd;border:1px solid #333;" +
+				"border-radius:6px;padding:6px;box-sizing:border-box;resize:vertical;";
+
+			var bar = document.createElement("div");
+			bar.style.cssText = "display:flex;gap:8px;margin-top:8px;";
+
+			function mkBtn(label, fn) {
+				var b = document.createElement("button");
+				b.textContent = label;
+				b.style.cssText = "flex:1;padding:6px 8px;border-radius:6px;border:1px solid #3a3a42;" +
+					"background:#2a2a31;color:#eee;cursor:pointer;";
+				b.addEventListener("click", fn);
+				return b;
+			}
+
+			bar.appendChild(mkBtn("保存", function () {
+				var pairs = parsePool(ta.value);
+				try {
+					if (pairs.length === 0) localStorage.removeItem(CUSTOM_KEY);
+					else localStorage.setItem(CUSTOM_KEY, JSON.stringify(pairs));
+				} catch (e) { /* noop */ }
+				refreshPool();
+				closeEditor();
+				switchNow();
+			}));
+			bar.appendChild(mkBtn("恢复默认", function () {
+				try { localStorage.removeItem(CUSTOM_KEY); } catch (e) { /* noop */ }
+				refreshPool();
+				closeEditor();
+				switchNow();
+			}));
+			bar.appendChild(mkBtn("关闭", closeEditor));
+
+			wrap.appendChild(title);
+			wrap.appendChild(ta);
+			wrap.appendChild(bar);
+			document.body.appendChild(wrap);
+			editorEl = wrap;
+		}
+
 		function attachToggle(el) {
 			if (toggleReady.has(el)) return;
 			toggleReady.add(el);
@@ -636,6 +751,7 @@ window.__ModuleLoader__.load({
 				// 开场词即本回合首次展示：重置节流窗口，并丢弃上一回合
 				// 遗留的 pending（新回合有自己的开场词，不需要补切）。
 				if (!hadTracked) {
+					refreshPool(); // 新回合：顺带拾取用户在编辑器里改过的词池
 					current = nextPhrase();
 					hadTracked = true;
 					lastSwitchAt = Date.now();
@@ -738,6 +854,7 @@ window.__ModuleLoader__.load({
 		}
 
 		function start() {
+			refreshPool();
 			sweep();
 			setInterval(maintain, MAINTAIN_MS);
 			// childList：认领新挂载的状态行、捕获轮换事件；
@@ -750,9 +867,11 @@ window.__ModuleLoader__.load({
 		}
 
 		exports.inject = [];
+		exports.parsePool = parsePool; // 供编辑器与测试复用
 		exports.apply = function () {
 			try {
 				window.__dshSpinnerWords = "applied";
+				window.__dshSpinnerWordsEditor = openEditor; // 控制台兜底入口
 				if (typeof console !== "undefined") console.info("[dsh-spinner-words] applied");
 			} catch (e) { /* noop */ }
 			if (document.body) start();
