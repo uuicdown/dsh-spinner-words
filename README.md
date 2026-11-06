@@ -11,9 +11,7 @@
 
 运行中的状态行。
 
-<img src="https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/demo.gif" width="420" alt="演示：连续两个回合分别抽到「原地转圈中…」和「正在撒欢…」">
-
-连续两个回合抽到不同的词，中间几帧是上一轮结束。
+<img src="https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/demo.gif" width="300" alt="演示：状态行在不同回合显示不同短语（举杯邀月中、正在旋转、正在收拢、正在乱窜）">
 
 ## 安装
 
