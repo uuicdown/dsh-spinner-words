@@ -64,7 +64,8 @@ pwsh install.ps1            # 或 powershell -ExecutionPolicy Bypass -File insta
 
 ## 工作原理（为什么不用改源码）
 
-- DSH 内置 TurnStatus 渲染为 `<div role="status" aria-live="polite">Deep diving...<span>计时</span></div>`。React 每秒重渲，但字符串 child 不变时不会回写 DOM 文本节点，外部改写得以长期保留。
+- **可见文案是属性，不是文本节点**。DSH 的 `RunningStatus` 渲染成 `<div data-chat-running>`，可见文字放在 `<span data-shimmer-text="深度求索中">` 上，由 CSS `::after { content: attr(data-shimmer-text) }` 画出来；同一个 div 里的 `<span role="status" class="…visuallyHidden">` 只是给读屏的。所以插件改的是 **`data-shimmer-text` 属性**，并同步读屏节点——改文本节点永远看不见效果。
+- React 每秒重渲，值没变就不触碰 DOM；回合结束元素卸载、新回合挂载出新节点时，`MutationObserver`（只订阅 `childList`）捕获并认领。
 - 轮换事件来自 `data-chat-flow-kind` 标记（DSH 滚动锚定依赖它，属稳定实现细节）：新挂载且种类在触发集内的行 = 一次轮换事件，`WeakSet` 去重 React 移除重插入。
 - `MutationObserver` 只订阅 `childList`：不订阅 `characterData`，否则每个流式 token 都会触发全文档扫描。
 - 所有 DOM 写入走 `setText()`「同值不写」。这是硬约束：`Text.data` 赋值即使值不变也会入队 mutation record，抽中原版文案时同值覆写会形成 `sweep→observe→sweep` 微任务风暴，饿死事件循环（2026-08-17 DSH Desktop 冻结事故）。代码里 `setText` 同值守卫 + `current !== BUILTIN` 双闸都在。

@@ -1,12 +1,16 @@
 // dsh-spinner-words: 自测（node verify.mjs）。
 //
-// 用 node:vm + 极简 DOM shim 驱动真实的 client.js bundle，不需要浏览器：
-//   - 数据不变量：词池分段条数、英中成对、中文串不重复、英文不重复；
-//   - 静态契约：__ModuleLoader__ 包裹、模块 id = 包名、内置文案锚点、同值不写守卫、默认中文；
-//   - 行为：认领状态行 → 显示中文短语；点击 → 切英文且同一条短语不换词；
-//   - 行为：每个新 assistant-step 行换一条，且连续两条不相同；
-//   - 行为：3 秒保底节流——窗口内的事件不立刻换词；
-//   - 行为：维护扫描在文案未变时不再写 DOM（防 characterData 微任务风暴）。
+// 用 node:vm + 极简 DOM shim 驱动真实的 client.js bundle，不需要浏览器。
+//
+// 关键事实（从 DSH 安装包 app.asar 的 RunningStatus 源码读出，v0.1.3 起按此实现）：
+//   运行状态行的可见文案不是文本节点，而是一个属性：
+//     <div data-chat-running>
+//       <span role="status" aria-live="polite" class="…visuallyHidden">深度求索中</span>  ← 只给读屏
+//       <span class="…runningDivider" aria-hidden="true"/>
+//       <span class="…runningContent"><WhaleTail/><span data-shimmer-text="深度求索中…">…</span></span>
+//     </div>
+//   可见文字由 CSS `::after { content: attr(data-shimmer-text) }` 画出，DOM 里没有对应文本节点。
+//   所以插件必须写 data-shimmer-text 属性，写文本节点永远看不见。
 import fs from 'node:fs'
 import vm from 'node:vm'
 import assert from 'node:assert'
@@ -21,7 +25,6 @@ function ok(label) {
   console.log(`  ok  ${label}`)
 }
 async function micro() {
-  // 让 bundle 里的 Promise.resolve().then 回调跑完
   await Promise.resolve()
   await Promise.resolve()
   await Promise.resolve()
@@ -34,19 +37,23 @@ assert.ok(src.includes(`id: "${pkg.name}"`), `模块 id 必须等于包名 ${pkg
 assert.ok(!/\brequire\s*\(/.test(src.split('factory: (require) =>')[1] || ''), 'factory 内不得真的调用 require')
 assert.ok(src.includes('"深度求索中"'), '必须认领中文 locale 的内置文案「深度求索中」')
 assert.ok(src.includes('"Deep diving"'), '必须认领英文 locale 的内置文案 "Deep diving"')
-assert.ok(src.includes('first.data === label'), 'setText 同值不写守卫必须存在')
+assert.ok(src.includes('[data-chat-running]'), '必须按容器属性 data-chat-running 定位状态行')
+assert.ok(src.includes('data-shimmer-text'), '必须改写 data-shimmer-text 属性（可见文案由它驱动）')
+assert.ok(
+  src.includes('getAttribute("data-shimmer-text") !== label') && src.includes('first.data !== label'),
+  'setText 同值不写守卫必须存在'
+)
 assert.ok(src.includes('lang = "zh"'), '默认语言必须是中文')
 assert.ok(pkg.dsh?.bundle?.patch, 'package.json 必须声明 dsh.bundle.patch')
 assert.ok(pkg.dsh?.client?.platform === 'web', 'package.json 必须声明 dsh.client.platform = web')
 assert.ok(pkg.exports?.['./client'], 'package.json 必须有 exports["./client"]')
-ok('bundle 包裹 / 模块 id / 锚点 / 守卫 / 默认中文 / 清单声明')
+ok('bundle 包裹 / 模块 id / 锚点 / 属性改写 / 守卫 / 默认中文 / 清单声明')
 
 // ---------------------------------------------------------------- 词池数据
 console.log('词池数据')
 const start = src.indexOf('var PAIRS = [')
 const end = src.indexOf('\n\t\t];', start)
 assert.ok(start > 0 && end > start, 'PAIRS 数组必须存在')
-// 从赋值号后切到分号前：结尾正好是 ']'（别用 end+1，那是换行位置，会漏掉 ']'）
 const arrayText = src.slice(src.indexOf('=', start) + 1, src.indexOf(';', start))
 const PAIRS = vm.runInNewContext('(' + arrayText + ')')
 assert.ok(Array.isArray(PAIRS) && PAIRS.length > 200, `词池要大：实际 ${PAIRS.length} 条`)
@@ -68,7 +75,6 @@ for (const pair of PAIRS) {
 }
 ok(`${PAIRS.length} 条成对、英文不重复、中文不重复、无自带省略号`)
 
-// 分段条数：按源码里的 ======== 小节标记切
 const marks = [...src.matchAll(/\/\/ ={8} \d\. .*?={8}/g)].map((m) => m.index)
 assert.ok(marks.length === 4, `词池必须分 4 段，实际 ${marks.length} 段`)
 const sections = marks.map((at, i) => {
@@ -96,35 +102,55 @@ function textNode(data) {
   }
 }
 
-function el({ kind = null, text = '' } = {}) {
-  const node = textNode(text)
-  const listeners = {}
-  const e = {
+/** 一个运行状态行容器：<div data-chat-running> … [data-shimmer-text] … [role=status] … </div> */
+function host(text) {
+  const shimmer = {
     nodeType: 1,
-    firstChild: node,
+    attrs: { 'data-shimmer-text': text },
+    writes: 0,
+    getAttribute(name) { return name in this.attrs ? this.attrs[name] : null },
+    setAttribute(name, value) { this.attrs[name] = value; this.writes++ }
+  }
+  const a11y = { nodeType: 1, firstChild: textNode(text) }
+  const listeners = {}
+  return {
+    nodeType: 1,
     style: {},
     title: '',
+    getAttribute: (name) => (name === 'data-chat-running' ? '' : null),
+    hasAttribute: (name) => name === 'data-chat-running',
+    querySelector: (sel) => (sel === '[data-shimmer-text]' ? shimmer : sel === '[role="status"]' ? a11y : null),
+    querySelectorAll: () => [],
     addEventListener(type, fn) { (listeners[type] ||= []).push(fn) },
     fire(type) { (listeners[type] || []).forEach((fn) => fn()) },
-    hasAttribute: (name) => kind !== null && name === 'data-chat-flow-kind',
+    _shimmer: shimmer,
+    _a11y: a11y,
+    label() { return shimmer.attrs['data-shimmer-text'] },
+    relabel(v) { shimmer.attrs['data-shimmer-text'] = v }
+  }
+}
+
+/** 一个不含状态行的普通对话行（只用来触发轮换事件） */
+function row(kind) {
+  return {
+    nodeType: 1,
+    hasAttribute: (name) => name === 'data-chat-flow-kind',
     getAttribute: (name) => (name === 'data-chat-flow-kind' ? kind : null),
     querySelectorAll: () => []
   }
-  return e
 }
 
 let clock = 1_000_000
-let statusEls = []
+let hosts = []
 let observerCb = null
 let maintainFn = null
-let store = {}
+const store = {}
 
 const context = {
   console,
   Promise,
   Date: { now: () => clock },
   // 不能同步执行 fn：节流补切的 scheduleRelease 会自己重排，同步跑会无限递归。
-  // 真实环境里补切由 maintain()/定时器驱动，测试里用 maintainFn() 手动触发。
   setTimeout: () => 0,
   setInterval: (fn) => { maintainFn = fn; return 0 },
   localStorage: {
@@ -137,7 +163,7 @@ const context = {
   },
   document: {
     body: {},
-    querySelectorAll: (sel) => (sel === 'div[role="status"]' ? statusEls.slice() : []),
+    querySelectorAll: (sel) => (sel === '[data-chat-running]' ? hosts.slice() : []),
     addEventListener() {}
   }
 }
@@ -153,36 +179,36 @@ ok('bundle 在 vm 里加载并 apply()（无 require、无浏览器依赖）')
 
 // ---------------------------------------------------------------- 认领与语言
 console.log('认领与语言')
-const status = el({ text: '深度求索中' })
-statusEls = [status]
+const status = host('深度求索中')
+hosts = [status]
 observerCb([{ addedNodes: [status] }])
 await micro()
 
-assert.match(status.firstChild.data, /…$/, `默认必须显示中文短语，实际 "${status.firstChild.data}"`)
-assert.ok(status.firstChild.data !== '深度求索中', '必须已被插件认领')
+assert.match(status.label(), /…$/, `默认必须显示中文短语，实际 "${status.label()}"`)
+assert.notStrictEqual(status.label(), '深度求索中', '必须已被插件认领（属性被改写）')
+assert.strictEqual(status._a11y.firstChild.data, status.label(), '读屏用的 role=status 文本必须同步')
 assert.strictEqual(status.title, '点击切换为 English', '认领后应挂上可点击提示')
 assert.strictEqual(status.style.cursor, 'pointer', '认领后应可点击')
-const zhLabel = status.firstChild.data
-ok(`认领成功，显示中文：${zhLabel}`)
+const zhLabel = status.label()
+ok(`认领成功，改写属性显示中文：${zhLabel}`)
 
 status.fire('click')
-assert.match(status.firstChild.data, /^[A-Z].*\.\.\.$/, `点击后应显示英文短语，实际 "${status.firstChild.data}"`)
+assert.match(status.label(), /^[A-Z].*\.\.\.$/, `点击后应显示英文短语，实际 "${status.label()}"`)
 assert.strictEqual(store['dsh-spinner-words:lang'], 'en', '语言选择必须写进 localStorage')
-ok(`点击切英文：${status.firstChild.data}（同一条短语只换语言）`)
+ok(`点击切英文：${status.label()}（同一条短语只换语言）`)
 
 status.fire('click')
-assert.strictEqual(status.firstChild.data, zhLabel, '再点一次应回到同一条中文短语')
+assert.strictEqual(status.label(), zhLabel, '再点一次应回到同一条中文短语')
 ok('再点一次回到同一条中文短语（不重新抽取）')
 
 // ---------------------------------------------------------------- 轮换与节流
 console.log('轮换与节流')
-const labels = [status.firstChild.data]
+const labels = [status.label()]
 for (let i = 0; i < 30; i++) {
   clock += 3100
-  const row = el({ kind: 'assistant-step' })
-  observerCb([{ addedNodes: [row] }])
+  observerCb([{ addedNodes: [row('assistant-step')] }])
   await micro()
-  labels.push(status.firstChild.data)
+  labels.push(status.label())
 }
 for (let i = 1; i < labels.length; i++) {
   assert.notStrictEqual(labels[i], labels[i - 1], `连续两条不能相同：${labels[i - 1]}`)
@@ -190,64 +216,61 @@ for (let i = 1; i < labels.length; i++) {
 assert.ok(new Set(labels).size > 20, `31 次轮换应出现足够多样的短语，实际 ${new Set(labels).size} 种`)
 ok(`31 次轮换无连续重复，共 ${new Set(labels).size} 种`)
 
-const before = status.firstChild.data
-clock += 500 // 落在 3 秒窗口内
-const row2 = el({ kind: 'tool-call' })
-observerCb([{ addedNodes: [row2] }])
+const before = status.label()
+clock += 500
+observerCb([{ addedNodes: [row('tool-call')] }])
 await micro()
-assert.strictEqual(status.firstChild.data, before, '窗口内（<3s）的事件不得立刻换词')
+assert.strictEqual(status.label(), before, '窗口内（<3s）的事件不得立刻换词')
 ok('3 秒保底节流生效')
 
 // ---------------------------------------------------------------- 防写入风暴
 console.log('防写入风暴')
-status.firstChild.setWrites(0)
+status._shimmer.writes = 0
+status._a11y.firstChild.setWrites(0)
 maintainFn()
 maintainFn()
 maintainFn()
-assert.strictEqual(status.firstChild.writes, 0, `文案未变时维护扫描不得写 DOM，实际写了 ${status.firstChild.writes} 次`)
+assert.strictEqual(status._shimmer.writes, 0, `文案未变时维护扫描不得写属性，实际写了 ${status._shimmer.writes} 次`)
+assert.strictEqual(status._a11y.firstChild.writes, 0, '文案未变时不得重写读屏文本节点')
 ok('维护扫描在文案未变时零写入（同值不写守卫生效）')
 
-// 非思考状态行不得被碰
-const other = el({ text: '12s' })
-statusEls = [status, other]
-const otherBefore = other.firstChild.data
-observerCb([{ addedNodes: [other] }])
-await micro()
-assert.strictEqual(other.firstChild.data, otherBefore, '不认识的 role=status 元素不得被改写')
-ok('别的 role=status 元素不受影响')
-
-// ---------------------------------------------------------------- 锚点写法兼容
-console.log('锚点写法兼容')
-// 内置文案可能写成三个点，也可能写成单个省略号字符（U+2026）；
-// 只认一种的话，DSH 换写法时插件会静默 no-op，且用户看不出来。
-const ellipsis = el({ text: 'Deep diving…' })
-statusEls = [ellipsis]
-observerCb([{ addedNodes: [ellipsis] }])
-await micro()
-assert.match(ellipsis.firstChild.data, /…$/, `省略号形式的锚点也必须被认领，实际 "${ellipsis.firstChild.data}"`)
-assert.notStrictEqual(ellipsis.firstChild.data, 'Deep diving…', '省略号形式必须被改写，而不是原样留着')
-ok('"Deep diving…"（U+2026）形式也被认领')
-
-const unrelated = el({ text: 'Loading assets...' })
-statusEls = [unrelated]
+// ---------------------------------------------------------------- 锚点兼容
+console.log('锚点兼容')
+const unrelated = host('Loading assets...')
+hosts = [unrelated]
 observerCb([{ addedNodes: [unrelated] }])
 await micro()
-assert.strictEqual(unrelated.firstChild.data, 'Loading assets...', '长得像但不是锚点的状态文本不得被改写')
+assert.strictEqual(unrelated.label(), 'Loading assets...', '长得像但不是锚点的状态文本不得被改写')
 ok('近似文本不被误认领')
 
-// 真实内置文案的第二种形态：超过 15 秒后带「用时」的整串文本
-const timed = el({ text: '深度求索中，用时 12s ···' })
-statusEls = [timed]
+const english = host('Deep diving')
+hosts = [english]
+observerCb([{ addedNodes: [english] }])
+await micro()
+assert.match(english.label(), /…$/, `英文 locale 的 "Deep diving" 也必须被认领，实际 "${english.label()}"`)
+ok('"Deep diving" 被认领')
+
+// 真实形态：超过 15 秒后带「用时」的整串
+const timed = host('深度求索中，用时 12s ···')
+hosts = [timed]
 observerCb([{ addedNodes: [timed] }])
 await micro()
-assert.match(timed.firstChild.data, /…$/, `带「用时」的整串文案也必须被认领，实际 "${timed.firstChild.data}"`)
-ok('"深度求索中，用时 12s ···" 整串文案也被认领')
+assert.match(timed.label(), /…$/, `带「用时」的整串也必须被认领，实际 "${timed.label()}"`)
+ok('"深度求索中，用时 12s ···" 整串被认领')
 
-// React 会随时间把计时写回文本节点：维护扫描必须能把它恢复成当前短语
-const beforeRestore = timed.firstChild.data
-timed.firstChild.data = '深度求索中，用时 13s ···'
+const steady = timed.label()
+timed.relabel('深度求索中，用时 13s ···') // 模拟 React 每秒回写
 maintainFn()
-assert.strictEqual(timed.firstChild.data, beforeRestore, 'React 回写计时后，维护扫描必须恢复当前短语')
+assert.strictEqual(timed.label(), steady, 'React 回写计时后，维护扫描必须恢复当前短语')
 ok('React 回写计时后能被恢复')
+
+// 隐藏行（holding）不该被当成新回合
+const holdingHost = host('深度求索中')
+holdingHost.hasAttribute = (name) => name === 'data-chat-running' || name === 'data-holding'
+hosts = [timed, holdingHost]
+observerCb([{ addedNodes: [holdingHost] }])
+await micro()
+assert.strictEqual(holdingHost.label(), '深度求索中', 'holding（已结束/隐藏）行不该被认领')
+ok('holding 行不被认领')
 
 console.log(`\n全部通过：${passed} 项检查`)

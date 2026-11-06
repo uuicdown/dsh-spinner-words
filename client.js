@@ -19,12 +19,22 @@
 //   - 双语：默认中文，点击状态行在中/英之间切换：同一条短语换语言展示、
 //     不重新抽取；语言选择存 localStorage，重载后恢复。
 //
-// 实现方式：DOM 文本节点改写，不覆盖任何渲染插槽。
-//   ui-conversation 的 TurnStatus 渲染结构是
-//     <div role="status" aria-live="polite">Deep diving...<span>…clock…</span></div>
-//   React 每秒重渲该组件，但 vdom 的字符串 child（"Deep diving..."）前后不变时
-//   React 不会回写 DOM 文本节点，外部改写得以原样保留；回合结束元素卸载、
-//   新回合挂载出新文本节点时，MutationObserver（仅订阅 childList）捕获并认领。
+// 实现方式：属性改写（不是文本节点），不覆盖任何渲染插槽。
+//   RunningStatus 的真实结构（从 DSH 安装包 app.asar 的源码读出）：
+//     <div data-chat-running [data-holding] aria-hidden=…>
+//       <span role="status" aria-live="polite" class="…visuallyHidden">深度求索中</span>
+//       <span class="…runningDivider" aria-hidden="true"/>
+//       <span class="…runningContent">
+//         <RunningWhaleTail/>
+//         <span data-shimmer-text="深度求索中">…</span>   ← 可见文字由 CSS ::after 画
+//       </span>
+//     </div>
+//   可见文案来自 data-shimmer-text 属性（`::after{content:attr(data-shimmer-text)}`），
+//   DOM 里没有对应文本节点——写文本节点用户永远看不见（v0.1.0~v0.1.2 就栽在这里）。
+//   所以「认领」= 找 [data-chat-running] 里的 [data-shimmer-text] 并改属性；
+//   role=status 那个节点是给读屏的视觉隐藏元素，同步写入保证读屏念的和看到的一致。
+//   React 每秒重渲，值没变就不触碰 DOM；回合结束元素卸载、新回合挂载出新节点时，
+//   MutationObserver（仅订阅 childList）捕获并认领。
 //   轮换事件来自同一 observer：ChatNodeSeat 渲染的每个对话行都带宿主自用的
 //     data-chat-flow-kind = user | assistant-step | tool-call | ...
 //   （DSH 滚动锚定依赖该标记，属稳定实现细节）。新挂载、种类在触发集内、
@@ -433,12 +443,16 @@ window.__ModuleLoader__.load({
 		var pending = false;
 		var releaseScheduled = false;
 
-		function statusList() {
-			return document.querySelectorAll('div[role="status"]');
+		function hostList() {
+			return document.querySelectorAll("[data-chat-running]");
+		}
+
+		function shimmerOf(host) {
+			return host.querySelector("[data-shimmer-text]");
 		}
 
 		function liveStatuses() {
-			var list = statusList();
+			var list = hostList();
 			var live = [];
 			for (var i = 0; i < list.length; i++) {
 				if (tracked.has(list[i])) live.push(list[i]);
@@ -446,16 +460,25 @@ window.__ModuleLoader__.load({
 			return live;
 		}
 
-		/** 同值不写：Text.data 赋值即使值不变也会入队 characterData mutation
-		 *  record，进而再次触发本插件自己的 MutationObserver；当 current 恰为
-		 *  "Deep diving..."（与内置文案逐字相同）时，同值覆写会形成
-		 *  sweep→observe→sweep 微任务风暴，饿死事件循环（2026-08-17 冻结事故）。
+		/** 可见文案由 CSS `::after { content: attr(data-shimmer-text) }` 画出，
+		 *  DOM 里没有对应文本节点——必须写属性，写文本节点用户永远看不见。
+		 *  同值不写：React 每秒重渲，值没变就不再触碰 DOM。
+		 *  role=status 的读屏节点同步成同一条，保证读屏念的和眼睛看到的一致。
 		 *  返回本次是否真的写了 DOM。 */
-		function setText(el, label) {
-			var first = el.firstChild;
-			if (!first || first.nodeType !== 3 || first.data === label) return false;
-			first.data = label;
-			return true;
+		function setText(host, label) {
+			var changed = false;
+			var pixel = shimmerOf(host);
+			if (pixel && pixel.getAttribute("data-shimmer-text") !== label) {
+				pixel.setAttribute("data-shimmer-text", label);
+				changed = true;
+			}
+			var a11y = host.querySelector('[role="status"]');
+			var first = a11y && a11y.firstChild;
+			if (first && first.nodeType === 3 && first.data !== label) {
+				first.data = label;
+				changed = true;
+			}
+			return changed;
 		}
 
 		/** 认领时挂点击监听 + 可点击提示（cursor/title 不在 React vdom 里，
@@ -519,25 +542,29 @@ window.__ModuleLoader__.load({
 
 		/** 扫描：认领新挂载的思考状态行；兜底 React 回写。 */
 		function sweep() {
-			var list = statusList();
+			var list = hostList();
 			var hadTracked = false;
 			for (var i = 0; i < list.length; i++) {
 				if (tracked.has(list[i])) { hadTracked = true; break; }
 			}
 			for (var j = 0; j < list.length; j++) {
-				var el = list[j];
-				var first = el.firstChild;
-				if (!first || first.nodeType !== 3) continue;
-				if (tracked.has(el)) {
+				var host = list[j];
+				// holding = 本轮已结束、元素留着占位（带 data-holding 且 aria-hidden），
+				// 不是"正在思考"，不认领也不进袋。
+				if (host.hasAttribute && host.hasAttribute("data-holding")) continue;
+				var pixel = shimmerOf(host);
+				if (!pixel) continue;
+				var text = pixel.getAttribute("data-shimmer-text");
+				if (tracked.has(host)) {
 					// 兜底：React 若回写了内置文案，恢复当前短语。
 					// isAnchor(current) 是第二道闸：setText 已同值不写，
 					// 这里显式排除，防未来重构绕过守卫复活风暴。
-					if (isAnchor(first.data) && current !== null && !isAnchor(current)) setText(el, current);
+					if (isAnchor(text) && current !== null && !isAnchor(current)) setText(host, current);
 					continue;
 				}
-				if (!isAnchor(first.data)) continue; // 不是思考状态行，不碰
-				tracked.add(el);
-				attachToggle(el);
+				if (!isAnchor(text)) continue; // 不是思考状态行，不碰
+				tracked.add(host);
+				attachToggle(host);
 				// 此前已无活动状态行 = 新回合开场：从袋里取新的一条；
 				// 取完立刻置位，同一批挂载的多行（多会话并排）复用同一条。
 				// 开场词即本回合首次展示：重置节流窗口，并丢弃上一回合
@@ -548,9 +575,7 @@ window.__ModuleLoader__.load({
 					lastSwitchAt = Date.now();
 					pending = false;
 				}
-				// 抽中原版文案时（current === BUILTIN）同值守卫会跳过写入，
-				// 展示效果与写入完全一致，且不产生 mutation record。
-				setText(el, current);
+				setText(host, current);
 			}
 		}
 
