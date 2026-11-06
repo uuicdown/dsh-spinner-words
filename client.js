@@ -53,10 +53,16 @@
 //     防止随后的自动轮换立刻覆盖用户的选择。
 // Bundle 格式遵循 DSH client 模块系统：window.__ModuleLoader__.load({id, factory})。
 // 纯浏览器实现：无 require 依赖，host（Node）进程误导入本文件时静默跳过。
-// 诊断标记：模块只要被浏览器执行过，就能在 DevTools 里看到这个全局变量。
-// 用于区分「模块根本没加载」和「加载了但没认领状态行」。
+// 诊断探针：不需要开发者工具也能看出卡在哪一环——窗口标题会变。
+//   "✅module-loaded · 原标题"  = 这个文件进了浏览器，但 apply 没被调用
+//   "✅applied · 原标题"        = apply 跑过了（再不改文案 = 认领逻辑有问题）
+//   标题毫无变化               = 模块根本没被加载（清单/发布环节的问题）
 try {
-	if (typeof window !== "undefined") window.__dshSpinnerWords = "module-loaded";
+	if (typeof window !== "undefined") {
+		window.__dshSpinnerWordsBaseTitle = typeof document !== "undefined" ? document.title : "";
+		window.__dshSpinnerWords = "module-loaded";
+		if (typeof document !== "undefined") document.title = "✅module-loaded · " + window.__dshSpinnerWordsBaseTitle;
+	}
 } catch (e) { /* noop */ }
 
 if (typeof window !== "undefined" && window.__ModuleLoader__) {
@@ -67,7 +73,6 @@ window.__ModuleLoader__.load({
 		var module = { exports: {} };
 		var exports = module.exports;
 		Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-		try { window.__dshSpinnerWords = "factory-ran"; } catch (e) { /* noop */ }
 
 		// ---- 内置文案锚点 ----
 		// 实测（DSH 桌面版，i18n key chat.deepDiving / chat.deepDivingFor）：
@@ -445,6 +450,7 @@ window.__ModuleLoader__.load({
 		// pending：窗口内到达、等待窗口边界补切的轮换事件。
 		var tracked = new WeakSet();
 		var seenRows = new WeakSet();
+		var claimedOnce = false;
 		var current = null;
 		var lastSwitchAt = 0;
 		var pending = false;
@@ -572,6 +578,10 @@ window.__ModuleLoader__.load({
 				if (!isAnchor(text)) continue; // 不是思考状态行，不碰
 				tracked.add(host);
 				attachToggle(host);
+				if (!claimedOnce) {
+					claimedOnce = true;
+					try { document.title = "✅claimed · " + (window.__dshSpinnerWordsBaseTitle || ""); } catch (e) { /* noop */ }
+				}
 				// 此前已无活动状态行 = 新回合开场：从袋里取新的一条；
 				// 取完立刻置位，同一批挂载的多行（多会话并排）复用同一条。
 				// 开场词即本回合首次展示：重置节流窗口，并丢弃上一回合
@@ -661,7 +671,10 @@ window.__ModuleLoader__.load({
 
 		exports.inject = [];
 		exports.apply = function () {
-			try { window.__dshSpinnerWords = "applied"; } catch (e) { /* noop */ }
+			try {
+				window.__dshSpinnerWords = "applied";
+				if (typeof document !== "undefined") document.title = "✅applied · " + (window.__dshSpinnerWordsBaseTitle || "");
+			} catch (e) { /* noop */ }
 			if (document.body) start();
 			else document.addEventListener("DOMContentLoaded", start, { once: true });
 		};
