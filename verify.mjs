@@ -32,7 +32,8 @@ console.log('静态契约')
 assert.ok(src.includes('window.__ModuleLoader__.load({'), 'bundle 必须用 __ModuleLoader__.load 包裹')
 assert.ok(src.includes(`id: "${pkg.name}"`), `模块 id 必须等于包名 ${pkg.name}`)
 assert.ok(!/\brequire\s*\(/.test(src.split('factory: (require) =>')[1] || ''), 'factory 内不得真的调用 require')
-assert.ok(src.includes('var ANCHORS = ["Deep diving...", "Deep diving…"];'), '三个点与省略号两种锚点写法都必须存在')
+assert.ok(src.includes('"深度求索中"'), '必须认领中文 locale 的内置文案「深度求索中」')
+assert.ok(src.includes('"Deep diving"'), '必须认领英文 locale 的内置文案 "Deep diving"')
 assert.ok(src.includes('first.data === label'), 'setText 同值不写守卫必须存在')
 assert.ok(src.includes('lang = "zh"'), '默认语言必须是中文')
 assert.ok(pkg.dsh?.bundle?.patch, 'package.json 必须声明 dsh.bundle.patch')
@@ -152,13 +153,13 @@ ok('bundle 在 vm 里加载并 apply()（无 require、无浏览器依赖）')
 
 // ---------------------------------------------------------------- 认领与语言
 console.log('认领与语言')
-const status = el({ text: 'Deep diving...' })
+const status = el({ text: '深度求索中' })
 statusEls = [status]
 observerCb([{ addedNodes: [status] }])
 await micro()
 
 assert.match(status.firstChild.data, /…$/, `默认必须显示中文短语，实际 "${status.firstChild.data}"`)
-assert.ok(status.firstChild.data !== 'Deep diving...', '必须已被插件认领')
+assert.ok(status.firstChild.data !== '深度求索中', '必须已被插件认领')
 assert.strictEqual(status.title, '点击切换为 English', '认领后应挂上可点击提示')
 assert.strictEqual(status.style.cursor, 'pointer', '认领后应可点击')
 const zhLabel = status.firstChild.data
@@ -233,5 +234,20 @@ observerCb([{ addedNodes: [unrelated] }])
 await micro()
 assert.strictEqual(unrelated.firstChild.data, 'Loading assets...', '长得像但不是锚点的状态文本不得被改写')
 ok('近似文本不被误认领')
+
+// 真实内置文案的第二种形态：超过 15 秒后带「用时」的整串文本
+const timed = el({ text: '深度求索中，用时 12s ···' })
+statusEls = [timed]
+observerCb([{ addedNodes: [timed] }])
+await micro()
+assert.match(timed.firstChild.data, /…$/, `带「用时」的整串文案也必须被认领，实际 "${timed.firstChild.data}"`)
+ok('"深度求索中，用时 12s ···" 整串文案也被认领')
+
+// React 会随时间把计时写回文本节点：维护扫描必须能把它恢复成当前短语
+const beforeRestore = timed.firstChild.data
+timed.firstChild.data = '深度求索中，用时 13s ···'
+maintainFn()
+assert.strictEqual(timed.firstChild.data, beforeRestore, 'React 回写计时后，维护扫描必须恢复当前短语')
+ok('React 回写计时后能被恢复')
 
 console.log(`\n全部通过：${passed} 项检查`)

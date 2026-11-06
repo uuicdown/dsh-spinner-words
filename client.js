@@ -52,14 +52,19 @@ window.__ModuleLoader__.load({
 		var exports = module.exports;
 		Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 
-		// ---- 内置文案锚点：三个点（"..."）与单个省略号字符（U+2026）两种写法
-		//      都收。只认一种的话，DSH 换个写法插件就静默 no-op，用户还看不出来。
-		//      两种都改掉 = 自动停用（见文件头）。 ----
-		var ANCHORS = ["Deep diving...", "Deep diving…"];
+		// ---- 内置文案锚点 ----
+		// 实测（DSH 桌面版，i18n key chat.deepDiving / chat.deepDivingFor）：
+		//   中文「深度求索中」  → 超过 15 秒变「深度求索中，用时 {duration} ···」
+		//   英文「Deep diving」 → 超过 15 秒变「Deep diving for {duration} ···」
+		// 两者都没有省略号；社区插件锚定的 "Deep diving..." 在这一版并不存在。
+		// 老写法（三个点 / U+2026）一并保留，跨版本兼容。
+		// 全都认不出来 = 自动停用（见文件头），不报错不崩。
+		var ANCHORS = ["深度求索中", "Deep diving", "Deep diving...", "Deep diving…"];
+		var DURATION_RE = /^(?:深度求索中，用时 |Deep diving for ).*···$/;
 		var BUILTIN = ANCHORS[0];
 		function isAnchor(text) {
-			for (var a = 0; a < ANCHORS.length; a++) if (ANCHORS[a] === text) return true;
-			return false;
+			if (ANCHORS.indexOf(text) !== -1) return true;
+			return DURATION_RE.test(text);
 		}
 
 		// ---- 保底节流：两次短语切换（含开场认领）的最小间隔 ----
