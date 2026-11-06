@@ -50,6 +50,8 @@ assert.ok(src.includes('keydown'), '必须有键盘快捷键入口（不依赖�
 assert.ok(src.includes('__dshSpinnerWordsEditor'), '必须暴露控制台兜底入口 window.__dshSpinnerWordsEditor()')
 assert.ok(src.includes('characterData: true'), '必须订阅 characterData，否则 React 每秒回写文本时我们收不到通知（会闪回内置文案）')
 assert.ok(src.includes('"characterData"'), 'onMutate 里必须处理 characterData mutation')
+assert.ok(src.includes('[data-dsh-words-motion="swim"]{animation'), '动画必须挂在图标容器上（内层 SVG 平时 display:none，动它看不见）')
+assert.ok(src.includes('prefers-reduced-motion'), '必须尊重系统减动效设置')
 assert.ok(pkg.dsh?.client?.platform === 'web', 'package.json 必须声明 dsh.client.platform = web')
 assert.ok(pkg.exports?.['./client'], 'package.json 必须有 exports["./client"]')
 ok('bundle 包裹 / 模块 id / 锚点 / 属性改写 / 守卫 / 默认中文 / 清单声明')

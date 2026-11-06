@@ -532,19 +532,19 @@ window.__ModuleLoader__.load({
 				"@keyframes dsw-sing{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(8deg) translateY(-1px)}}" +
 				"@keyframes dsw-peek{0%,100%{transform:translateX(0)}50%{transform:translateX(1px) rotate(4deg)}}" +
 				"[data-dsh-words-motion],[data-dsh-words-motion] svg,[data-dsh-words-motion] span{transform-origin:50% 60%;will-change:transform}" +
-				'[data-dsh-words-motion="swim"] svg{animation:dsw-swim 2.2s ease-in-out infinite}' +
-				'[data-dsh-words-motion="dive"] svg{animation:dsw-dive 2.6s ease-in-out infinite}' +
-				'[data-dsh-words-motion="float"] svg{animation:dsw-float 2.8s ease-in-out infinite}' +
-				'[data-dsh-words-motion="doze"] svg{animation:dsw-doze 3.4s ease-in-out infinite}' +
-				'[data-dsh-words-motion="think"] svg{animation:dsw-think 2.4s ease-in-out infinite}' +
-				'[data-dsh-words-motion="spin"] svg{animation:dsw-spin 2.4s linear infinite}' +
-				'[data-dsh-words-motion="dash"] svg{animation:dsw-dash .8s ease-in-out infinite}' +
-				'[data-dsh-words-motion="shake"] svg{animation:dsw-shake 1.1s ease-in-out infinite}' +
-				'[data-dsh-words-motion="glow"] svg{animation:dsw-glow 1.8s ease-in-out infinite}' +
-				'[data-dsh-words-motion="munch"] svg{animation:dsw-munch 1.4s ease-in-out infinite}' +
-				'[data-dsh-words-motion="sing"] svg{animation:dsw-sing 1.6s ease-in-out infinite}' +
-				'[data-dsh-words-motion="peek"] svg{animation:dsw-peek 2s ease-in-out infinite}' +
-				"@media (prefers-reduced-motion: reduce){[data-dsh-words-motion] svg{animation:none!important}}";
+				'[data-dsh-words-motion="swim"]{animation:dsw-swim 2.2s ease-in-out infinite}' +
+				'[data-dsh-words-motion="dive"]{animation:dsw-dive 2.6s ease-in-out infinite}' +
+				'[data-dsh-words-motion="float"]{animation:dsw-float 2.8s ease-in-out infinite}' +
+				'[data-dsh-words-motion="doze"]{animation:dsw-doze 3.4s ease-in-out infinite}' +
+				'[data-dsh-words-motion="think"]{animation:dsw-think 2.4s ease-in-out infinite}' +
+				'[data-dsh-words-motion="spin"]{animation:dsw-spin 2.4s linear infinite}' +
+				'[data-dsh-words-motion="dash"]{animation:dsw-dash .8s ease-in-out infinite}' +
+				'[data-dsh-words-motion="shake"]{animation:dsw-shake 1.1s ease-in-out infinite}' +
+				'[data-dsh-words-motion="glow"]{animation:dsw-glow 1.8s ease-in-out infinite}' +
+				'[data-dsh-words-motion="munch"]{animation:dsw-munch 1.4s ease-in-out infinite}' +
+				'[data-dsh-words-motion="sing"]{animation:dsw-sing 1.6s ease-in-out infinite}' +
+				'[data-dsh-words-motion="peek"]{animation:dsw-peek 2s ease-in-out infinite}' +
+				"@media (prefers-reduced-motion: reduce){[data-dsh-words-motion]{animation:none!important}}";
 			document.head.appendChild(s);
 		}
 
