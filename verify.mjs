@@ -180,6 +180,8 @@ let observerCb = null
 let maintainFn = null
 const store = {}
 
+const docListeners = {}
+
 const context = {
   console,
   Promise,
@@ -198,8 +200,20 @@ const context = {
   document: {
     body: {},
     querySelectorAll: (sel) => (sel === '[data-chat-running]' ? hosts.slice() : []),
-    addEventListener() {}
+    addEventListener(type, fn) { (docListeners[type] ||= []).push(fn) }
   }
+}
+
+/** 触发 document 捕获阶段的点击（模拟真实点击，不经过元素上的监听） */
+function docClick(target, opts = {}) {
+  const ev = {
+    target,
+    altKey: !!opts.altKey,
+    metaKey: false,
+    preventDefault() {},
+    stopPropagation() {}
+  }
+  ;(docListeners.click || []).forEach((fn) => fn(ev))
 }
 context.window = { __ModuleLoader__: { load: ({ factory }) => { context.__exports = factory(() => { throw new Error('不得 require') }) } } }
 context.globalThis = context
@@ -235,6 +249,15 @@ ok(`点击切英文：${status.label()}（同一条短语只换语言）`)
 status.fire('click')
 assert.strictEqual(status.label(), zhLabel, '再点一次应回到同一条中文短语')
 ok('再点一次回到同一条中文短语（不重新抽取）')
+
+// document 捕获阶段的路径：状态行内部若 stopPropagation，元素上的监听收不到事件，
+// 所以真正的点击由 start() 里挂在 document 捕获阶段的监听接管。
+const docBefore = status.label()
+docClick(status)
+assert.notStrictEqual(status.label(), docBefore, 'document 捕获阶段的点击必须生效（不依赖冒泡）')
+docClick(status) // 复位回原语言
+assert.strictEqual(status.label(), docBefore, '再点一次应复位')
+ok('document 捕获阶段点击生效（行组件 stopPropagation 也不影响）')
 
 // ---------------------------------------------------------------- 节奏（一回合一个词）
 console.log('轮换节奏')

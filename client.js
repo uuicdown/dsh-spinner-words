@@ -678,6 +678,16 @@ window.__ModuleLoader__.load({
 			editorEl = wrap;
 		}
 
+		/** 从事件目标向上找被认领的状态行（document 捕获阶段用，避免依赖行内冒泡）。 */
+		function hostFromEvent(target) {
+			var el = target;
+			while (el && el !== document.body) {
+				if (el.getAttribute && el.getAttribute("data-chat-running") !== null) return el;
+				el = el.parentNode;
+			}
+			return null;
+		}
+
 		function attachToggle(el) {
 			if (toggleReady.has(el)) return;
 			toggleReady.add(el);
@@ -858,6 +868,29 @@ window.__ModuleLoader__.load({
 		function start() {
 			refreshPool();
 			sweep();
+			// 点击接管放在 document 捕获阶段：状态行内部（React/行组件）可能
+			// stopPropagation，冒泡到元素上的监听就永远不触发（用户实测点不动）。
+			document.addEventListener("click", function (e) {
+				var host = hostFromEvent(e.target);
+				if (!host || !tracked.has(host)) return;
+				e.stopPropagation();
+				if (e.altKey || e.metaKey) {
+					e.preventDefault();
+					openEditor();
+					return;
+				}
+				onToggle();
+			}, true);
+
+			// 双击 = 打开词池编辑器（不带修饰键也能进）
+			document.addEventListener("dblclick", function (e) {
+				var host = hostFromEvent(e.target);
+				if (!host || !tracked.has(host)) return;
+				e.stopPropagation();
+				e.preventDefault();
+				openEditor();
+			}, true);
+
 			// 键盘入口：Alt+E 打开词池编辑器。不依赖点击冒泡，行组件拦事件也照样能开。
 			document.addEventListener("keydown", function (e) {
 				if (!e || !e.altKey || e.ctrlKey || e.metaKey) return;
