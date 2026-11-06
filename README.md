@@ -85,6 +85,7 @@ chipping through the wall | 正在凿壁偷光 | boring a hole in the wall for a
 | --- | --- |
 | 改掉内置文案（当前：中文「深度求索中」/ 英文「Deep diving」） | 插件不再生效，不报错，界面正常 |
 | 改掉 `data-chat-running` / `data-shimmer-text` / `data-chat-flow-kind` | 部分失效或完全不生效，界面正常 |
+| 给状态行本身加上点击行为 | 会被插件的捕获阶段监听 `stopPropagation()` 拦下，该行为不生效（点一下仍然只切换语言） |
 
 ## 与 dsh-deep-verbs 二选一
 
