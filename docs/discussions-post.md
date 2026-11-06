@@ -54,7 +54,7 @@ Would this fit the roadmap? I am not asking for the 287-word pool to be bundled 
 rendering to read from configuration, so any word list (including none) can be supplied.
 ```
 
-## 第二篇（可选）：Show Your Plugins!
+## 第二篇：Show Your Plugins!
 
 分类：**Show Your Plugins!**
 
@@ -67,24 +67,30 @@ dsh-spinner-words — 287 bilingual phrases for the running-status line, with an
 正文：
 
 ```
-Small plugin, single purpose: replace the running-status line with one phrase per turn.
+Small plugin, one job: replace the running-status line with one phrase per turn.
+
+![demo](https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/demo.gif)
+
+What it does:
 
 - 287 phrases: Claude Code's spinner verbs (158), a whale-themed set (13), and Chinese
-  idiomatic/poetic phrases (116).
-- One word per turn, matching Claude Code's cadence — no rotation mid-turn.
-- Click the status line to switch language (same phrase, no re-roll).
-- Double-click or `Alt+E` opens an editor; the pool is `english | 中文` lines stored in
-  localStorage, so you can replace it with your own.
-- Text and interaction only: icons, animation, sizes and colors are untouched.
-- 29 phrases carry an English gloss shown on hover.
+  idiomatic and poetic phrases (116).
+- One phrase per turn, held for the whole turn — no rotation mid-turn.
+- Click the status line to switch language: same phrase, no re-roll.
+- Double-click or `Alt+E` opens an editor. The pool is `english | 中文` lines in localStorage,
+  so you can replace it with your own list.
+- 29 phrases carry an English gloss, shown on hover only.
+- Text and interaction only: icons, animation, sizes and colours are untouched.
 
-```bash
+```
 dsh plugin --profile desktop add dsh-spinner-words
 ```
 
 Repo: https://github.com/uuicdown/dsh-spinner-words · MIT
 
-Note: it conflicts with dsh-deep-verbs — both patch the same status node, keep one.
+Two notes. It patches the same status node as dsh-deep-verbs, so keep one of them, not both.
+And if you would rather see this as a built-in option, there is a separate thread for that:
+#12493.
 ```
 
 ## 发帖注意
