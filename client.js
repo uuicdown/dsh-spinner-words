@@ -53,6 +53,12 @@
 //     防止随后的自动轮换立刻覆盖用户的选择。
 // Bundle 格式遵循 DSH client 模块系统：window.__ModuleLoader__.load({id, factory})。
 // 纯浏览器实现：无 require 依赖，host（Node）进程误导入本文件时静默跳过。
+// 诊断标记：模块只要被浏览器执行过，就能在 DevTools 里看到这个全局变量。
+// 用于区分「模块根本没加载」和「加载了但没认领状态行」。
+try {
+	if (typeof window !== "undefined") window.__dshSpinnerWords = "module-loaded";
+} catch (e) { /* noop */ }
+
 if (typeof window !== "undefined" && window.__ModuleLoader__) {
 window.__ModuleLoader__.load({
 	id: "dsh-spinner-words",
@@ -61,6 +67,7 @@ window.__ModuleLoader__.load({
 		var module = { exports: {} };
 		var exports = module.exports;
 		Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+		try { window.__dshSpinnerWords = "factory-ran"; } catch (e) { /* noop */ }
 
 		// ---- 内置文案锚点 ----
 		// 实测（DSH 桌面版，i18n key chat.deepDiving / chat.deepDivingFor）：
@@ -654,6 +661,7 @@ window.__ModuleLoader__.load({
 
 		exports.inject = [];
 		exports.apply = function () {
+			try { window.__dshSpinnerWords = "applied"; } catch (e) { /* noop */ }
 			if (document.body) start();
 			else document.addEventListener("DOMContentLoaded", start, { once: true });
 		};

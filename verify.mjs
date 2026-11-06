@@ -45,6 +45,7 @@ assert.ok(
 )
 assert.ok(src.includes('lang = "zh"'), '默认语言必须是中文')
 assert.ok(pkg.dsh?.bundle?.patch, 'package.json 必须声明 dsh.bundle.patch')
+assert.ok(src.includes('__dshSpinnerWords'), '必须有可观测的加载标记 __dshSpinnerWords（区分"没加载"与"没认领"）')
 assert.ok(pkg.dsh?.client?.platform === 'web', 'package.json 必须声明 dsh.client.platform = web')
 assert.ok(pkg.exports?.['./client'], 'package.json 必须有 exports["./client"]')
 ok('bundle 包裹 / 模块 id / 锚点 / 属性改写 / 守卫 / 默认中文 / 清单声明')
