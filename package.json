@@ -1,6 +1,6 @@
 {
   "name": "dsh-spinner-words",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "type": "module",
   "main": "index.js",
   "description": "DeepSeek Harness 插件：把思考状态行换成 287 条双语轮换词（Claude Code 158 + 鲸鱼系 13 + 中国本土雅 86 / 俗 30），一回合一个词，点击状态行切中英，词池可在前端编辑（双击 / Alt+E）。不改 DSH 源码。",
@@ -32,6 +32,7 @@
     "client.js",
     "cordis.patch.yml",
     "install.ps1",
+    "DEVELOPING.md",
     "README.md",
     "LICENSE"
   ],
