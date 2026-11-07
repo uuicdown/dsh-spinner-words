@@ -5,6 +5,18 @@
 > npm 上最早可安装的版本是 **0.7.4**；0.1.0–0.7.3 只存在于 git 历史，未发布到 registry。
 > 加过 tag 的版本：[`v0.7.2`](../../releases/tag/v0.7.2)、[`v0.7.3`](../../releases/tag/v0.7.3)、[`v0.8.0`](../../releases/tag/v0.8.0)。
 
+## [0.8.5] — 2026-11-07
+
+### Changed
+
+- README 顶部加 dsh-plugin.org 收录徽章（插件已获 **Verified** 标签）
+- 演示动图换成完整的 33.5 秒版本（320×385、8fps、1.5 MB），文件改名 `docs/demo-status.gif`：`raw.githubusercontent.com` 的图片按 URL 缓存，同名覆盖不生效
+- 删除动图下方那句解释性图注，`alt` 改为客观描述
+
+### Added
+
+- `docs/awesome-lists.md`：beancookie / 0xsline 两个 awesome 列表的现成条目行与提交流程
+
 ## [0.8.4] — 2026-11-06
 
 ### Fixed
