@@ -1,0 +1,37 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: 自测（node:vm 驱动真实 bundle）
+        run: node verify.mjs
+      - name: 打包内容断言
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e '
+            const j = require("/tmp/pack.json")[0];
+            const files = j.files.map((f) => f.path).sort();
+            const want = ["DEVELOPING.md","LICENSE","README.md","client.js","cordis.patch.yml","index.js","install.ps1","package.json"];
+            const fsx = require("fs");
+            if (JSON.stringify(files) !== JSON.stringify(want)) {
+              console.error("打包内容不符合预期:", files); process.exit(1);
+            }
+            console.log("打包内容 OK:", files.length, "个文件");
+          '

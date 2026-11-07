@@ -428,13 +428,15 @@ window.__ModuleLoader__.load({
 			for (var i = 0; i < lines.length; i++) {
 				var line = lines[i].trim();
 				if (!line || line.charAt(0) === "#") continue;
-				var bar = line.indexOf("|");
-				var en = bar === -1 ? line : line.slice(0, bar).trim();
-				var zh = bar === -1 ? line : line.slice(bar + 1).trim();
+				// 最多三段：英文 | 中文 | 注脚。注脚里若含 | 也归进第三段，不再被吞进中文。
+				var parts = line.split("|");
+				var en = parts.length > 1 ? parts[0].trim() : line;
+				var zh = parts.length > 1 ? parts[1].trim() : line;
+				var gloss = parts.length > 2 ? parts.slice(2).join("|").trim() : "";
 				if (!en && !zh) continue;
 				if (!en) en = zh;
 				if (!zh) zh = en;
-				out.push([en, zh]);
+				out.push(gloss ? [en, zh, gloss] : [en, zh]);
 			}
 			return out;
 		}
@@ -522,6 +524,8 @@ window.__ModuleLoader__.load({
 		// lastSwitchAt：上次切换（含开场认领）时间戳，构成保底节流窗口；
 		// pending：窗口内到达、等待窗口边界补切的轮换事件。
 		var tracked = new WeakSet();
+		// 认领时记下该 host 原本的内置文案，暂停/拆除时按原样还原（Map 需要遍历，不能用 WeakMap）
+		var originalOf = new Map();
 		var seenRows = new WeakSet();
 		var ownedText = new WeakSet();
 		var claimedOnce = false;
@@ -622,6 +626,7 @@ window.__ModuleLoader__.load({
 				: "Click to switch to 中文; Alt+click or Alt+E edits the word pool";
 		}
 		function onToggle(e) {
+			if (isPaused()) return; // 停用后不再响应点击（否则还会切语言）
 			// Alt / Cmd + 点击 = 打开词池编辑器（加减词、改映射）
 			if (e && (e.altKey || e.metaKey)) { openEditor(); return; }
 			lang = lang === "zh" ? "en" : "zh";
@@ -655,7 +660,9 @@ window.__ModuleLoader__.load({
 			title.style.cssText = "margin-bottom:6px;color:#8cd0ff;";
 
 			var ta = document.createElement("textarea");
-			ta.value = activePairs.map(function (p) { return p[0] + " | " + p[1]; }).join("\n");
+			ta.value = activePairs.map(function (p) {
+				return p[0] + " | " + p[1] + (p[2] ? " | " + p[2] : "");
+			}).join("\n");
 			ta.style.cssText = "width:100%;height:240px;background:#111;color:#ddd;border:1px solid #333;" +
 				"border-radius:6px;padding:6px;box-sizing:border-box;resize:vertical;";
 
@@ -710,10 +717,36 @@ window.__ModuleLoader__.load({
 			return null;
 		}
 
+		/** 读出该 host 当前承载的内置文案（属性或文本节点），用于暂停时还原。 */
+		function anchorTextOf(host) {
+			var pixels = host.querySelectorAll("[data-shimmer-text]");
+			for (var i = 0; i < pixels.length; i++) {
+				if (isAnchor(pixels[i].getAttribute("data-shimmer-text"))) {
+					return pixels[i].getAttribute("data-shimmer-text");
+				}
+			}
+			var texts = textTargets(host);
+			for (var j = 0; j < texts.length; j++) if (isAnchor(texts[j].data)) return texts[j].data;
+			return null;
+		}
+
+		/** 把所有被改写过的状态行还原成内置文案，并摘掉点击提示。 */
+		function restoreAll() {
+			originalOf.forEach(function (text, host) {
+				try {
+					setText(host, text);
+					if (host.style) host.style.cursor = "";
+					host.title = "";
+				} catch (e) { /* noop */ }
+			});
+			current = null;
+		}
+
 		function attachToggle(el) {
 			if (toggleReady.has(el)) return;
 			toggleReady.add(el);
 			el.addEventListener("click", onToggle);
+			if (runtime.elementListeners) runtime.elementListeners.push([el, "click", onToggle]);
 			el.style.cursor = "pointer";
 			el.title = toggleHint();
 		}
@@ -774,12 +807,18 @@ window.__ModuleLoader__.load({
 				if (!shimmerOf(host)) continue;
 				var anchored = anyAnchor(host);
 				if (tracked.has(host)) {
+					// 停用后再启用时 current 已被清空，这里重新抽一条，否则会一直停在原始文案上。
+					if (current === null) current = nextPhrase();
 					// 兜底：React 若把内置文案写回来了（属性或文本节点任一），恢复当前短语。
 					if (anchored && current !== null && !isAnchor(current)) setText(host, current);
 					continue;
 				}
 				if (!anchored) continue; // 不是思考状态行，不碰
 				tracked.add(host);
+				if (!originalOf.has(host)) {
+					var original = anchorTextOf(host);
+					if (original) originalOf.set(host, original);
+				}
 				attachToggle(host);
 				if (!claimedOnce) {
 					claimedOnce = true;
@@ -900,7 +939,7 @@ window.__ModuleLoader__.load({
 		// ---- 资源句柄：apply() 可能被调用多次（禁用重启用、热重载）----
 		// 旧实例必须先拆除，否则两套 document 监听叠加：点一次状态行触发两次
 		// onToggle（语言翻两次等于没翻），两个 current 还会争抢同一段文案。
-		var runtime = { observer: null, timer: null, listeners: [] };
+		var runtime = { observer: null, timer: null, listeners: [], elementListeners: [] };
 
 		function onDoc(type, fn) {
 			document.addEventListener(type, fn, true);
@@ -914,8 +953,15 @@ window.__ModuleLoader__.load({
 				for (var i = 0; i < runtime.listeners.length; i++) {
 					document.removeEventListener(runtime.listeners[i][0], runtime.listeners[i][1], true);
 				}
+				for (var k = 0; k < runtime.elementListeners.length; k++) {
+					var rec = runtime.elementListeners[k];
+					rec[0].removeEventListener(rec[1], rec[2]);
+				}
+				restoreAll();
+				originalOf.clear();
+				toggleReady = new WeakSet();
 			} catch (e) { /* noop */ }
-			runtime = { observer: null, timer: null, listeners: [] };
+			runtime = { observer: null, timer: null, listeners: [], elementListeners: [] };
 			tracked = new WeakSet();
 			seenRows = new WeakSet();
 			seenHosts = new WeakSet();
@@ -938,6 +984,9 @@ window.__ModuleLoader__.load({
 				if (v) window.localStorage.setItem(PAUSE_KEY, "1");
 				else window.localStorage.removeItem(PAUSE_KEY);
 			} catch (e) { /* noop */ }
+			// 停用要把已经写进去的文案还原成内置文案，而不是只停止后续扫描。
+			if (v) restoreAll();
+			else sweep();
 		}
 
 		var SWEEP_MS = 200;
@@ -1029,6 +1078,7 @@ window.__ModuleLoader__.load({
 		exports.inject = [];
 		exports.parsePool = parsePool; // 供编辑器与测试复用
 		exports.teardown = teardown;   // 宿主禁用/重载时可主动拆除实例
+		exports.setPaused = setPaused; // 供宿主/测试切换停用态（会同时还原或重新接管）
 		/** 在 DSH 设置页注册一行开关；拿不到 slots/React 就静默跳过，不影响插件本体。 */
 		function registerSettings(ctx) {
 			try {

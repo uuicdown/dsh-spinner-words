@@ -20,7 +20,7 @@
 node verify.mjs
 ```
 
-21 项断言，覆盖：
+30 项断言，覆盖：
 
 1. 静态契约：`__ModuleLoader__` 包裹、模块 id = 包名、锚点、同值守卫、默认中文、清单字段
 2. 词池数据：287 条成对、英文/中文各自不重复、分段条数、`[en, zh, gloss?]` 形状
@@ -39,7 +39,7 @@ npm publish --access public
 
 `package.json` 已声明 `repository` / `homepage` / `bugs` / `files` 白名单与 `dsh.bundle.patch`、`dsh.client.platform`、`exports["./client"]`。
 
-`npm pack` 的产物应只含 7 个文件（`client.js`、`index.js`、`cordis.patch.yml`、`install.ps1`、`package.json`、`README.md`、`LICENSE`）。
+`npm pack` 的产物应只含 8 个文件（`client.js`、`index.js`、`cordis.patch.yml`、`install.ps1`、`package.json`、`README.md`、`DEVELOPING.md`、`LICENSE`）。
 
 ## 踩过的坑（别重犯）
 
