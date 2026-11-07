@@ -8,11 +8,11 @@
 
 纯前端插件，不改 DSH 源码，不占用渲染插槽。
 
-<img src="https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/status.png" width="354" alt="DSH 运行中的状态行显示「正在体会上善若水…」">
+![DSH 运行中的状态行显示「正在体会上善若水…」](https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/status.png)
 
 运行中的状态行。
 
-<img src="https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/demo-status.gif" width="300" alt="演示：状态行在不同回合显示不同短语（举杯邀月中、正在旋转、正在收拢、正在乱窜）">
+![演示：状态行在不同回合显示不同短语（举杯邀月中、正在旋转、正在收拢、正在乱窜）](https://raw.githubusercontent.com/uuicdown/dsh-spinner-words/main/docs/demo-status.gif)
 
 ## 安装
 

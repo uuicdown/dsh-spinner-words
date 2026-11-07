@@ -5,6 +5,12 @@
 > npm 上最早可安装的版本是 **0.7.4**；0.1.0–0.7.3 只存在于 git 历史，未发布到 registry。
 > 加过 tag 的版本：[`v0.7.2`](../../releases/tag/v0.7.2)、[`v0.7.3`](../../releases/tag/v0.7.3)、[`v0.8.0`](../../releases/tag/v0.8.0)。
 
+## [0.8.6] — 2026-11-07
+
+### Fixed
+
+- **npm 页面看不到图片**：README 里的两张图原本用 HTML `<img src width>`，npm 的 README 渲染器会过滤内联 HTML，标签被整段丢弃；改为 Markdown 图片语法 `![alt](url)` 后两个平台都能渲染（代价是无法再指定显示宽度）。
+
 ## [0.8.5] — 2026-11-07
 
 ### Changed
