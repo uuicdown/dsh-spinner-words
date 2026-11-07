@@ -169,6 +169,11 @@ function host(text) {
       return []
     },
     addEventListener(type, fn) { (listeners[type] ||= []).push(fn) },
+    removeEventListener(type, fn) {
+      const list = listeners[type] || []
+      const i = list.indexOf(fn)
+      if (i >= 0) list.splice(i, 1)
+    },
     fire(type) { (listeners[type] || []).forEach((fn) => fn()) },
     _shimmer: highlight,
     _base: baseText,
@@ -214,7 +219,8 @@ const context = {
   clearInterval: () => {},
   localStorage: {
     getItem: (k) => (k in store ? store[k] : null),
-    setItem: (k, v) => { store[k] = v }
+    setItem: (k, v) => { store[k] = v },
+    removeItem: (k) => { delete store[k] }
   },
   MutationObserver: class {
     constructor(cb) { observerCb = cb }
@@ -462,6 +468,38 @@ assert.strictEqual(p1.label(), '深度求索中', '暂停时不得改写状态�
 context.localStorage.setItem('dsh-spinner-words:paused', '0')
 context.localStorage.getItem && context.localStorage.setItem('dsh-spinner-words:paused', '')
 ok('暂停态生效：状态行保持内置文案')
+
+console.log('停用与拆除')
+const ph = host('深度求索中')
+hosts = [ph]
+observerCb([{ addedNodes: [ph] }])
+await micro()
+const claimedLabel = ph.label()
+assert.notStrictEqual(claimedLabel, '深度求索中', '认领后应是自定义短语')
+bundle.setPaused(true)
+assert.strictEqual(ph.label(), '深度求索中', '停用后必须还原内置文案（不是只停止后续扫描）')
+assert.strictEqual(ph.highlightLabel(), '深度求索中', '停用后高光层也要还原')
+bundle.setPaused(false)
+assert.notStrictEqual(ph.label(), '深度求索中', '重新启用后应再次接管')
+ok('停用真还原：文本层与高光层都回到内置文案')
+
+// 拆除后点状态行不应再切换语言
+bundle.teardown()
+assert.strictEqual(ph.label(), '深度求索中', 'teardown 后应还原内置文案')
+ph.fire('click')
+assert.strictEqual(ph.label(), '深度求索中', 'teardown 后元素级点击监听必须已摘掉，点击不再切换')
+ok('teardown 摘掉元素监听并还原文案')
+// 拆除后重新挂载，恢复后续用例依赖的运行时状态
+bundle.apply()
+await micro()
+
+console.log('词池编辑器往返')
+const tri = bundle.parsePool('alpha | 甲 | 注脚一句')
+assert.strictEqual(tri.length, 1, '一行应解析出一条')
+assert.strictEqual(JSON.stringify(tri[0]), JSON.stringify(['alpha', '甲', '注脚一句']), `三段式必须保留注脚，实际 ${JSON.stringify(tri[0])}`)
+const two = bundle.parsePool('beta | 乙')
+assert.strictEqual(JSON.stringify(two[0]), JSON.stringify(['beta', '乙']), `两段式不应多出第三项，实际 ${JSON.stringify(two[0])}`)
+ok('parsePool 三段式保留注脚')
 
 console.log('节流有效性')
 // 对照实验：页面上留着 holding 占位行（DSH 每轮结束后的常态）时，

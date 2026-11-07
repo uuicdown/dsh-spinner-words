@@ -100,7 +100,7 @@ chipping through the wall | 正在凿壁偷光 | boring a hole in the wall for a
 
 ## 开发
 
-见 [`DEVELOPING.md`](DEVELOPING.md)。一句话版本：`node verify.mjs`，21 项断言，用 `node:vm` 驱动真实 bundle，不需要浏览器。
+见 [`DEVELOPING.md`](DEVELOPING.md)。一句话版本：`node verify.mjs`，30 项断言，用 `node:vm` 驱动真实 bundle，不需要浏览器。
 
 ## License
 
