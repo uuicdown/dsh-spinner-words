@@ -66,6 +66,7 @@ one per turn, editable pool.
 - dsh.bundle declared in package.json (installable via `dsh plugin add`)
 - npm: https://www.npmjs.com/package/dsh-spinner-words (0.8.4, MIT)
 - Repo tagged with the `dsh-plugin` topic
+- Listed on dsh-plugin.org with a Verified badge: https://dsh-plugin.org/plugins/uuicdown/dsh-spinner-words
 ```
 
 0xsline 那张同理，但只需改一个文件（或两个语言的 README 各一次）。

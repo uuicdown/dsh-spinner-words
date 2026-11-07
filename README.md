@@ -2,6 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/dsh-spinner-words?color=3b82f6)](https://www.npmjs.com/package/dsh-spinner-words)
 [![license](https://img.shields.io/npm/l/dsh-spinner-words?color=3b82f6)](LICENSE)
+[![Listed on dsh-plugin.org](https://dsh-plugin.org/badges/listed.svg)](https://dsh-plugin.org/plugins/uuicdown/dsh-spinner-words)
 
 把 DeepSeek Harness 思考状态行的那句「深度求索中」，换成一池双语短语，每回合抽一条：Claude Code 原版 spinner 词、鲸鱼系 deep 短语、中国本土文化词。
 
