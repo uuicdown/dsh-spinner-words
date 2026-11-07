@@ -7,7 +7,7 @@
 | 市场 | 收录方式 | 状态 |
 | --- | --- | --- |
 | [dsh-plugin.org](https://dsh-plugin.org) | 扫描 GitHub `dsh-plugin` topic，自动生成条目 | ✅ 已满足，等下一次扫描 |
-| [dshopen.org](https://dshopen.org)（开放插件市场） | 在 `polang233/dsh-plugin-index` 提收录申请 issue | ✅ 已收录（#295 已关闭，2026-11-07） |
+| [dshopen.org](https://dshopen.org)（开放插件市场） | 在 `polang233/dsh-plugin-index` 提收录申请 issue | ✅ 已收录（#295 已关闭，2026-11-07；维护者复核时确认基于 **0.9.0**，并注意到新增的设置开关与「二选一」冲突说明） |
 | dshbase.com / dsh.pub / dsh-plugin.market / deepseekplugin.com | 多为按 npm 包 + 仓库自动聚合 | ⏳ 加完 topic 后自动出现，无需单独提交 |
 
 ## 1. dsh-plugin.org（自动）

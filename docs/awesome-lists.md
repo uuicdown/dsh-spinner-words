@@ -67,7 +67,7 @@ one per turn, editable pool.
 - npm: https://www.npmjs.com/package/dsh-spinner-words (0.8.4, MIT)
 - Repo tagged with the `dsh-plugin` topic
 - Listed on dsh-plugin.org with a Verified badge: https://dsh-plugin.org/plugins/uuicdown/dsh-spinner-words
-- Also listed on dshopen.org: https://dshopen.org/zh/plugins/dsh-spinner-words/
+- Also listed on dshopen.org (reviewed at v0.9.0): https://dshopen.org/zh/plugins/dsh-spinner-words/
 ```
 
 0xsline 那张同理，但只需改一个文件（或两个语言的 README 各一次）。
