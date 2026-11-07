@@ -5,6 +5,18 @@
 > npm 上最早可安装的版本是 **0.7.4**；0.1.0–0.7.3 只存在于 git 历史，未发布到 registry。
 > 加过 tag 的版本：[`v0.7.2`](../../releases/tag/v0.7.2)、[`v0.7.3`](../../releases/tag/v0.7.3)、[`v0.8.0`](../../releases/tag/v0.8.0)。
 
+## [0.9.0] — 2026-11-07
+
+### Added
+
+- **设置页开关**：在 DSH「设置 → 通用」里注册一行「思考状态行替换（dsh-spinner-words）」，勾掉即整体停用、状态行回到内置文案，再勾上恢复。开关状态存 `localStorage`（`dsh-spinner-words:paused`），刷新与重启保持。
+- 实现走客户端插件的 `ctx.slots.inject("settings.general.item", …)`；拿不到 slots 或 React 时静默跳过，不影响插件本体。
+
+### Changed
+
+- `apply(ctx)` 现在接收 Cordis 客户端上下文；旧调用方式（无参数）仍然可用
+- 自测 25 → **27 项**，新增设置页注册与暂停态断言
+
 ## [0.8.6] — 2026-11-07
 
 ### Fixed

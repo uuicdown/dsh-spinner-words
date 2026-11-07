@@ -34,7 +34,10 @@ async function micro() {
 console.log('静态契约')
 assert.ok(src.includes('window.__ModuleLoader__.load({'), 'bundle 必须用 __ModuleLoader__.load 包裹')
 assert.ok(src.includes(`id: "${pkg.name}"`), `模块 id 必须等于包名 ${pkg.name}`)
-assert.ok(!/\brequire\s*\(/.test(src.split('factory: (require) =>')[1] || ''), 'factory 内不得真的调用 require')
+// 只允许 require React（设置页开关需要），其余依赖一律不许引入
+const factoryBody = src.split('factory: (require) =>')[1] || ''
+const requiredIds = [...factoryBody.matchAll(/require\("([^"]+)"\)/g)].map((m) => m[1])
+assert.deepStrictEqual(requiredIds, ['react'], `factory 内只允许 require("react")，实际：${requiredIds.join(', ') || '无'}`)
 assert.ok(src.includes('"深度求索中"'), '必须认领中文 locale 的内置文案「深度求索中」')
 assert.ok(src.includes('"Deep diving"'), '必须认领英文 locale 的内置文案 "Deep diving"')
 assert.ok(src.includes('[data-chat-running]'), '必须按容器属性 data-chat-running 定位状态行')
@@ -244,7 +247,17 @@ function docClick(target, opts = {}) {
   }
   ;(docListeners.click || []).forEach((fn) => fn(ev))
 }
-context.window = { __ModuleLoader__: { load: ({ factory }) => { context.__exports = factory(() => { throw new Error('不得 require') }) } } }
+context.window = {
+  localStorage: context.localStorage,
+  __ModuleLoader__: {
+    load: ({ factory }) => {
+      context.__exports = factory((id) => {
+        if (id === 'react') return { useState: (v) => [v, () => {}], createElement: () => ({}) }
+        throw new Error('不得 require: ' + id)
+      })
+    }
+  }
+}
 context.globalThis = context
 vm.createContext(context)
 vm.runInContext(src, context)
@@ -421,6 +434,34 @@ assert.strictEqual(JSON.stringify(parsed[0]), JSON.stringify(['alpha', '甲']))
 assert.strictEqual(JSON.stringify(parsed[2]), JSON.stringify(['只有中文', '只有中文']), '只有一侧时两侧都用同一串')
 ok('parsePool：跳过注释空行、单侧兜底')
 
+
+console.log('设置页开关')
+assert.ok(src.includes('settings.general.item'), '必须在 DSH 设置页注册开关行')
+assert.ok(src.includes('dsh-spinner-words:paused'), '暂停状态要持久化到 localStorage')
+
+const injected = []
+const registered = []
+const fakeCtx = {
+  slots: {
+    inject(name, fn) { injected.push(name); fn() },
+    register(cfg, comp) { registered.push({ cfg, comp }); return { id: cfg.id } }
+  }
+}
+bundle.apply(fakeCtx)
+assert.ok(injected.indexOf('settings.general.item') >= 0, '应注册到 settings.general.item 槽位')
+assert.strictEqual(registered[0].cfg.id, 'dsh-spinner-words', '注册项 id 必须是包名')
+ok('设置页开关注册成功（id、槽位、组件）')
+
+// 暂停后不再接管状态行
+context.localStorage.setItem('dsh-spinner-words:paused', '1')
+const p1 = host('深度求索中')
+hosts = [p1]
+observerCb([{ addedNodes: [p1] }])
+await micro()
+assert.strictEqual(p1.label(), '深度求索中', '暂停时不得改写状态行')
+context.localStorage.setItem('dsh-spinner-words:paused', '0')
+context.localStorage.getItem && context.localStorage.setItem('dsh-spinner-words:paused', '')
+ok('暂停态生效：状态行保持内置文案')
 
 console.log('节流有效性')
 // 对照实验：页面上留着 holding 占位行（DSH 每轮结束后的常态）时，

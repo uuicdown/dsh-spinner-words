@@ -754,6 +754,7 @@ window.__ModuleLoader__.load({
 
 		/** 扫描：认领新挂载的思考状态行；兜底 React 回写。 */
 		function sweep() {
+			if (isPaused()) return;
 			var list = hostList();
 			var hadTracked = false;
 			for (var i = 0; i < list.length; i++) {
@@ -927,6 +928,18 @@ window.__ModuleLoader__.load({
 		// 「是否需要立即扫」不看 tracked —— holding 占位行和「内容不是锚点」的 host
 		// 永远不会进 tracked，用 tracked 判断会让节流窗口形同不存在。
 		// 改用 seenHosts：**检查过**的 host 都算见过，只有真正没见过的才立刻扫。
+		// 设置页开关：暂停后不再接管状态行（值存 localStorage，刷新/重启保持）
+		var PAUSE_KEY = "dsh-spinner-words:paused";
+		function isPaused() {
+			try { return window.localStorage.getItem(PAUSE_KEY) === "1"; } catch (e) { return false; }
+		}
+		function setPaused(v) {
+			try {
+				if (v) window.localStorage.setItem(PAUSE_KEY, "1");
+				else window.localStorage.removeItem(PAUSE_KEY);
+			} catch (e) { /* noop */ }
+		}
+
 		var SWEEP_MS = 200;
 		var lastSweepAt = 0;
 		var seenHosts = new WeakSet();
@@ -1016,7 +1029,43 @@ window.__ModuleLoader__.load({
 		exports.inject = [];
 		exports.parsePool = parsePool; // 供编辑器与测试复用
 		exports.teardown = teardown;   // 宿主禁用/重载时可主动拆除实例
-		exports.apply = function () {
+		/** 在 DSH 设置页注册一行开关；拿不到 slots/React 就静默跳过，不影响插件本体。 */
+		function registerSettings(ctx) {
+			try {
+				if (!ctx || !ctx.slots || typeof ctx.slots.inject !== "function") return false;
+				var React = null;
+				try { React = require("react"); } catch (e) { React = null; }
+				if (!React) return false;
+				function SpinnerWordsToggle() {
+					var state = React.useState(isPaused());
+					var paused = state[0], setState = state[1];
+					var h = React.createElement;
+					return h("label", { style: { display: "flex", alignItems: "center", gap: "8px" } },
+						h("input", {
+							type: "checkbox",
+							checked: !paused,
+							onChange: function (e) {
+								var enabled = e.target.checked;
+								setState(!enabled);
+								setPaused(!enabled);
+								if (enabled) sweep();
+							}
+						}),
+						h("span", null, "思考状态行替换（dsh-spinner-words）")
+					);
+				}
+				ctx.slots.inject("settings.general.item", function () {
+					return ctx.slots.register({
+						name: "settings.general.item",
+						id: "dsh-spinner-words",
+						order: 40
+					}, SpinnerWordsToggle);
+				});
+				return true;
+			} catch (e) { return false; }
+		}
+
+		exports.apply = function (ctx) {
 			// 已有活实例就先拆掉：否则两套 document 捕获监听叠加，
 			// 点一次状态行会触发两次切换（语言翻两次等于没翻）。
 			try {
@@ -1031,6 +1080,7 @@ window.__ModuleLoader__.load({
 				window.__dshSpinnerWordsEditor = openEditor; // 控制台兜底入口
 				if (typeof console !== "undefined") console.info("[dsh-spinner-words] applied");
 			} catch (e) { /* noop */ }
+			try { registerSettings(ctx); } catch (e) { /* noop */ }
 			if (document.body) start();
 			else document.addEventListener("DOMContentLoaded", start, { once: true });
 		};

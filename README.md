@@ -57,6 +57,7 @@ dsh plugin --profile desktop add git+https://github.com/uuicdown/dsh-spinner-wor
 | 单击状态行 | 中文 ⇄ English，同一条短语换语言 |
 | 双击状态行 / `Alt+E` | 打开词池编辑器 |
 | 控制台 `window.__dshSpinnerWordsEditor()` | 兜底入口 |
+| 设置 → 通用 | 勾掉「思考状态行替换」即可整体停用，状态行回到内置文案；再勾上恢复 |
 
 ## 自定义词池
 
